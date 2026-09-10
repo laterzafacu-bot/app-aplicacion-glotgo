@@ -513,6 +513,143 @@
   }
   .caso-ejemplos li { margin-bottom: 4px; }
 
+  /* ---------- Comunidad view: temas y sesiones ---------- */
+  .tema-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 18px;
+  }
+  .tema-card {
+    background: var(--blanco);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 20px;
+    cursor: pointer;
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .tema-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px rgba(14, 62, 130, 0.12);
+  }
+  .tema-card .icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    background: var(--celeste-bg);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    margin-bottom: 12px;
+  }
+  .tema-card h3 { margin: 0 0 4px; font-size: 15px; color: var(--azul-oscuro); }
+  .tema-card p { margin: 0; font-size: 12px; color: var(--gris); }
+
+  .back-link {
+    background: none;
+    border: none;
+    color: var(--celeste-dark);
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    padding: 0 0 14px;
+    font-family: inherit;
+  }
+  .comunidad-detail { max-width: 640px; }
+  .pregunta-prompt {
+    background: var(--celeste-bg);
+    border-left: 4px solid var(--celeste);
+    border-radius: 10px;
+    padding: 16px 18px;
+    font-size: 14px;
+    font-style: italic;
+    color: var(--azul-oscuro);
+    margin: 6px 0 26px;
+  }
+  .email-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 26px;
+    flex-wrap: wrap;
+  }
+  .email-row input[type=email] {
+    flex: 1;
+    min-width: 220px;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 13px;
+  }
+  .email-row .email-status { font-size: 11.5px; color: var(--gris); }
+
+  .sesiones-section h3, .proponer-section h3 { font-size: 14px; margin: 0 0 12px; color: var(--texto); }
+  .sesion-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: var(--blanco);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+  .sesion-card .horario { font-size: 13px; font-weight: 600; color: var(--azul-oscuro); }
+  .sesion-card .horario .sub { display: block; font-size: 11px; font-weight: 400; color: var(--gris); margin-top: 2px; }
+  .sesion-card button {
+    background: var(--celeste);
+    color: var(--blanco);
+    border: none;
+    border-radius: 8px;
+    padding: 9px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    flex-shrink: 0;
+  }
+  .sesion-card button:hover { background: var(--celeste-dark); }
+  .sesion-card button:disabled { background: var(--gris-claro); color: var(--gris); cursor: not-allowed; }
+
+  .proponer-section { margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--border); }
+  .proponer-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .proponer-row input[type=datetime-local] {
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 13px;
+  }
+  .proponer-row button {
+    background: var(--azul-oscuro);
+    color: var(--blanco);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .proponer-row button:hover { opacity: .9; }
+  .proponer-row button:disabled { opacity: .6; cursor: not-allowed; }
+
+  .confirmacion-box {
+    margin-top: 24px;
+    background: #eafaf0;
+    border-left: 4px solid #2fa860;
+    border-radius: 10px;
+    padding: 18px 20px;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .confirmacion-box a { color: var(--celeste-dark); font-weight: 600; }
+  .confirmacion-box.error-box {
+    background: #fdecec;
+    border-left-color: #c0392b;
+    color: #a12727;
+  }
+  .sin-sesiones { font-size: 13px; color: var(--gris); font-style: italic; margin-bottom: 10px; }
+
   @media (max-width: 860px) {
     .cards-row { grid-template-columns: 1fr; }
   }
@@ -647,11 +784,34 @@
     <!-- ---------------- COMUNIDAD ---------------- -->
     <section class="view" id="view-comunidad">
       <h1 class="greeting">Conversaciones en comunidad</h1>
-      <p class="greeting-sub">Próximamente.</p>
-      <div class="placeholder">
-        <div class="icon-big">💬</div>
-        <h2>Todavía no hay contenido acá</h2>
-        <p>Esta sección se va a sumar más adelante.</p>
+      <p class="greeting-sub">Practicá inglés hablado con otro alumno. Elegí un tema, sumate a un horario que ya propusieron o proponé el tuyo — la invitación de Calendar con el link de Meet les llega sola a los dos, sin que nadie más tenga que hacer nada.</p>
+
+      <div class="tema-grid" id="comunidad-grid"></div>
+
+      <div class="comunidad-detail" id="comunidad-detail" hidden>
+        <button type="button" class="back-link" id="comunidad-back">&larr; Volver a temas</button>
+        <h2 class="gramatica-detail-title" id="comunidad-detail-title"></h2>
+        <div class="pregunta-prompt" id="comunidad-pregunta"></div>
+
+        <div class="email-row">
+          <input type="email" id="comunidad-email" placeholder="Tu email (ahí te va a llegar la invitación de Calendar)">
+          <span class="email-status">Se guarda en este dispositivo para no pedírtelo de nuevo.</span>
+        </div>
+
+        <div class="sesiones-section">
+          <h3>Horarios propuestos por otros alumnos</h3>
+          <div id="comunidad-sesiones-list"></div>
+        </div>
+
+        <div class="proponer-section">
+          <h3>¿Ninguno te sirve? Proponé el tuyo</h3>
+          <div class="proponer-row">
+            <input type="datetime-local" id="comunidad-horario">
+            <button type="button" id="comunidad-proponer-btn">Proponer este horario</button>
+          </div>
+        </div>
+
+        <div class="confirmacion-box" id="comunidad-resultado" hidden></div>
       </div>
     </section>
 
@@ -1026,6 +1186,226 @@ function escapeHtml(str) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
 }
+
+/* ---------- Conversaciones en comunidad ---------- */
+const COMUNIDAD_BUSCAR_URL = "https://dominioservicion8nfacundo.cloud/webhook/valeria-conversaciones-buscar";
+const COMUNIDAD_PARTICIPAR_URL = "https://dominioservicion8nfacundo.cloud/webhook/valeria-conversaciones-participar";
+
+const comunidadGrid = document.getElementById('comunidad-grid');
+const comunidadDetail = document.getElementById('comunidad-detail');
+const comunidadDetailTitle = document.getElementById('comunidad-detail-title');
+const comunidadPregunta = document.getElementById('comunidad-pregunta');
+const comunidadEmailInput = document.getElementById('comunidad-email');
+const comunidadSesionesList = document.getElementById('comunidad-sesiones-list');
+const comunidadHorarioInput = document.getElementById('comunidad-horario');
+const comunidadProponerBtn = document.getElementById('comunidad-proponer-btn');
+const comunidadResultado = document.getElementById('comunidad-resultado');
+
+let comunidadTemaActivo = null;
+let comunidadCargada = false;
+
+comunidadEmailInput.value = localStorage.getItem('alumno_email') || '';
+comunidadEmailInput.addEventListener('change', () => {
+  localStorage.setItem('alumno_email', comunidadEmailInput.value.trim());
+});
+
+document.getElementById('comunidad-back').addEventListener('click', () => {
+  comunidadDetail.hidden = true;
+  comunidadGrid.hidden = false;
+});
+
+document.querySelector('.nav-item[data-view="comunidad"]').addEventListener('click', () => {
+  if (!comunidadCargada) {
+    comunidadCargada = true;
+    cargarTemasComunidad();
+  }
+});
+
+async function cargarTemasComunidad() {
+  comunidadGrid.innerHTML = '<div class="sin-sesiones">Cargando temas...</div>';
+  try {
+    const res = await fetch(COMUNIDAD_BUSCAR_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    const temas = data.temas || [];
+    comunidadGrid.innerHTML = '';
+    if (!temas.length) {
+      comunidadGrid.innerHTML = '<div class="sin-sesiones">Todavía no hay temas de conversación cargados.</div>';
+      return;
+    }
+    temas.forEach(tema => {
+      const card = document.createElement('div');
+      card.className = 'tema-card';
+      card.innerHTML = `
+        <div class="icon">💬</div>
+        <h3>${escapeHtml(tema.nombre)}</h3>
+        <p>Conversación en pareja con otro alumno</p>
+      `;
+      card.addEventListener('click', () => abrirTemaComunidad(tema.id, tema.nombre));
+      comunidadGrid.appendChild(card);
+    });
+  } catch (err) {
+    comunidadGrid.innerHTML = '<div class="sin-sesiones">No se pudieron cargar los temas (' + escapeHtml(err.message) + ').</div>';
+  }
+}
+
+async function abrirTemaComunidad(temaId, nombre) {
+  comunidadTemaActivo = { id: temaId, nombre };
+  comunidadDetailTitle.textContent = nombre;
+  comunidadPregunta.textContent = '';
+  comunidadSesionesList.innerHTML = '<div class="sin-sesiones">Buscando horarios abiertos...</div>';
+  comunidadResultado.hidden = true;
+  comunidadGrid.hidden = true;
+  comunidadDetail.hidden = false;
+
+  try {
+    const res = await fetch(COMUNIDAD_BUSCAR_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tema_id: temaId })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+
+    const preguntas = (data.tema && data.tema.preguntas) || [];
+    if (preguntas.length) {
+      const random = preguntas[Math.floor(Math.random() * preguntas.length)];
+      comunidadPregunta.textContent = '💡 ' + random;
+    }
+
+    renderSesionesAbiertas(data.sesiones_abiertas || []);
+  } catch (err) {
+    comunidadSesionesList.innerHTML = '<div class="sin-sesiones">No se pudieron cargar los horarios (' + escapeHtml(err.message) + ').</div>';
+  }
+}
+
+async function refrescarSesionesComunidad() {
+  if (!comunidadTemaActivo) return;
+  try {
+    const res = await fetch(COMUNIDAD_BUSCAR_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tema_id: comunidadTemaActivo.id })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    renderSesionesAbiertas(data.sesiones_abiertas || []);
+  } catch (err) {
+    /* si falla el refresco silencioso, se deja la lista como estaba */
+  }
+}
+
+function formatearHorarioComunidad(iso) {
+  try {
+    const d = new Date(iso);
+    return d.toLocaleString('es-AR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+  } catch (e) {
+    return iso;
+  }
+}
+
+function renderSesionesAbiertas(sesiones) {
+  comunidadSesionesList.innerHTML = '';
+  if (!sesiones.length) {
+    comunidadSesionesList.innerHTML = '<div class="sin-sesiones">Todavía nadie propuso un horario para este tema. ¡Sé el primero!</div>';
+    return;
+  }
+  sesiones.forEach(s => {
+    const row = document.createElement('div');
+    row.className = 'sesion-card';
+    row.innerHTML = `
+      <div class="horario">${escapeHtml(formatearHorarioComunidad(s.horario))}<span class="sub">Esperando un segundo participante</span></div>
+      <button type="button">Participar</button>
+    `;
+    row.querySelector('button').addEventListener('click', (e) => participarEnSesion(s.id, e.currentTarget));
+    comunidadSesionesList.appendChild(row);
+  });
+}
+
+function getEmailAlumnoComunidad() {
+  const email = comunidadEmailInput.value.trim();
+  if (!email) {
+    comunidadEmailInput.focus();
+    mostrarResultadoComunidad('Ingresá tu email para poder participar.', true);
+    return null;
+  }
+  localStorage.setItem('alumno_email', email);
+  return email;
+}
+
+function mostrarResultadoComunidad(html, esError) {
+  comunidadResultado.hidden = false;
+  comunidadResultado.className = 'confirmacion-box' + (esError ? ' error-box' : '');
+  comunidadResultado.innerHTML = html;
+}
+
+async function participarEnSesion(sesionId, btn) {
+  const email = getEmailAlumnoComunidad();
+  if (!email) return;
+  btn.disabled = true;
+  btn.textContent = 'Uniendo...';
+  try {
+    const res = await fetch(COMUNIDAD_PARTICIPAR_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sesion_id: sesionId, email })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    mostrarResultadoComunidad(
+      '¡Listo! Te uniste a la conversación. La invitación de Google Calendar con el link de Meet le llega automáticamente a <strong>' + escapeHtml(email) + '</strong> y a quien propuso el horario.' +
+      (data.meet_link ? '<br><a href="' + escapeHtml(data.meet_link) + '" target="_blank" rel="noopener">Ver link de Meet</a>' : ''),
+      false
+    );
+    refrescarSesionesComunidad();
+  } catch (err) {
+    btn.disabled = false;
+    btn.textContent = 'Participar';
+    mostrarResultadoComunidad('No se pudo completar la unión (' + escapeHtml(err.message) + ').', true);
+  }
+}
+
+comunidadProponerBtn.addEventListener('click', async () => {
+  const email = getEmailAlumnoComunidad();
+  if (!email) return;
+  const horario = comunidadHorarioInput.value;
+  if (!horario) {
+    mostrarResultadoComunidad('Elegí una fecha y hora para proponer.', true);
+    return;
+  }
+  comunidadProponerBtn.disabled = true;
+  comunidadProponerBtn.textContent = 'Creando...';
+  try {
+    const res = await fetch(COMUNIDAD_PARTICIPAR_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tema_id: comunidadTemaActivo.id,
+        tema_nombre: comunidadTemaActivo.nombre,
+        email,
+        horario: new Date(horario).toISOString()
+      })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    mostrarResultadoComunidad(
+      'Horario propuesto. Ya te llega la invitación de Calendar a <strong>' + escapeHtml(email) + '</strong>. Cuando otro alumno se sume, se lo agrega automáticamente al mismo evento y le llega su invitación también.' +
+      (data.meet_link ? '<br><a href="' + escapeHtml(data.meet_link) + '" target="_blank" rel="noopener">Ver link de Meet</a>' : ''),
+      false
+    );
+    comunidadHorarioInput.value = '';
+    refrescarSesionesComunidad();
+  } catch (err) {
+    mostrarResultadoComunidad('No se pudo crear el horario (' + escapeHtml(err.message) + ').', true);
+  } finally {
+    comunidadProponerBtn.disabled = false;
+    comunidadProponerBtn.textContent = 'Proponer este horario';
+  }
+});
 </script>
 </body>
 </html>
