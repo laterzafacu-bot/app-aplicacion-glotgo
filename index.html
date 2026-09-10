@@ -338,7 +338,35 @@
     padding: 0 0 14px;
   }
   .vocab-detail h2 { color: var(--azul-oscuro); margin-bottom: 4px; }
+  .vocab-word-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 14px;
+    margin-top: 18px;
+  }
+  .vocab-word-card {
+    background: var(--blanco);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+  }
+  .vocab-word-head { margin-bottom: 8px; }
   .vocab-word-card strong { color: var(--azul-oscuro); font-size: 15px; }
+  .vocab-word-card .fonetica { color: var(--gris); font-size: 12px; }
+  .vocab-word-card .definicion {
+    font-size: 13px;
+    line-height: 1.5;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed var(--border);
+  }
+  .vocab-word-card .ejemplo {
+    font-size: 13px;
+    font-style: italic;
+    line-height: 1.45;
+    margin-bottom: 8px;
+  }
+  .vocab-word-card .traduccion { font-size: 12px; color: var(--gris); }
 
   /* ---------- Gramática view: navegación por nivel ---------- */
   .gramatica-layout {
@@ -749,15 +777,15 @@ async function buscarVocabulario(categoria) {
       vocabDetailResultado.textContent = 'Todavía no hay vocabulario cargado para "' + categoria + '".';
       return;
     }
-    vocabDetailResultado.className = 'resultado';
-    vocabDetailResultado.innerHTML = palabras.map(p => `
-      <div class="chunk vocab-word-card">
-        <strong>${escapeHtml(p.palabra || '')}</strong>${p.fonetica ? ` <span class="sim">${escapeHtml(p.fonetica)}</span>` : ''}
-        <div>${escapeHtml(p.definicion || '')}</div>
-        <div><em>${escapeHtml(p.ejemplo || '')}</em></div>
-        <div class="sim">Traducción: ${escapeHtml(p.traduccion || '')}</div>
+    vocabDetailResultado.className = 'resultado mapa';
+    vocabDetailResultado.innerHTML = `<div class="vocab-word-grid">${palabras.map(p => `
+      <div class="vocab-word-card">
+        <div class="vocab-word-head"><strong>${escapeHtml(p.palabra || '')}</strong>${p.fonetica ? ` <span class="fonetica">${escapeHtml(p.fonetica)}</span>` : ''}</div>
+        <div class="definicion">${escapeHtml(p.definicion || '')}</div>
+        <div class="ejemplo">${escapeHtml(p.ejemplo || '')}</div>
+        <div class="traduccion">Traducción: ${escapeHtml(p.traduccion || '')}</div>
       </div>
-    `).join('');
+    `).join('')}</div>`;
   } catch (err) {
     vocabDetailResultado.className = 'resultado error';
     vocabDetailResultado.textContent = 'No se pudo consultar el vocabulario (' + err.message + '). Probá servir esta carpeta con npx serve.';
