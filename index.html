@@ -427,40 +427,60 @@
     color: #a12727;
   }
   .loading { color: var(--celeste-dark); font-style: italic; }
+
+  /* ---------- Gramática view: detalle de un tema (mapa conceptual) ---------- */
+  .gramatica-detail { max-width: 640px; }
+  .gramatica-detail-title {
+    color: var(--azul-oscuro);
+    font-size: 22px;
+    margin: 6px 0 22px;
+  }
+  .resultado.mapa {
+    margin-top: 0;
+    padding: 0;
+    background: none;
+    border-left: none;
+    border-radius: 0;
+    min-height: 0;
+    white-space: normal;
+  }
   .explicacion-breve {
-    margin-bottom: 18px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid #dbe6f4;
+    margin-bottom: 22px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+    line-height: 1.6;
   }
   .mapa-conceptual {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 14px;
+    display: flex;
+    flex-direction: column;
   }
   .caso-uso {
-    background: var(--blanco);
-    border: 1px solid #dbe6f4;
-    border-left: 3px solid var(--celeste);
-    border-radius: 10px;
-    padding: 14px 16px;
+    padding: 20px 0;
+    border-top: 1px solid var(--border);
+  }
+  .caso-uso:first-child {
+    padding-top: 0;
+    border-top: none;
   }
   .caso-titulo {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 700;
     color: var(--azul-oscuro);
-    margin-bottom: 6px;
+    margin-bottom: 10px;
   }
   .caso-descripcion {
-    font-size: 12.5px;
+    font-size: 13px;
     color: var(--gris);
-    margin-bottom: 10px;
-    line-height: 1.4;
+    margin-bottom: 14px;
+    padding-bottom: 14px;
+    line-height: 1.5;
+    border-bottom: 1px dashed var(--border);
   }
   .caso-ejemplos {
     margin: 0;
     padding-left: 18px;
-    font-size: 13px;
-    line-height: 1.6;
+    font-size: 13.5px;
+    line-height: 1.8;
   }
   .caso-ejemplos li { margin-bottom: 4px; }
 
@@ -549,17 +569,25 @@
 
     <!-- ---------------- GRAMÁTICA ---------------- -->
     <section class="view" id="view-gramatica">
-      <h1 class="greeting">Gramática</h1>
-      <p class="greeting-sub">Elegí tu nivel y un tema para ver el mapa conceptual.</p>
 
-      <div class="gramatica-layout">
-        <div class="nivel-rail" id="nivel-rail"></div>
+      <div class="gramatica-selector" id="gramatica-selector">
+        <h1 class="greeting">Gramática</h1>
+        <p class="greeting-sub">Elegí tu nivel y un tema para ver el mapa conceptual.</p>
 
-        <div class="gramatica-panel">
-          <div id="temas-list"></div>
-          <div class="meta" id="meta"></div>
-          <div class="resultado vacio" id="resultado">Elegí un tema para ver el mapa conceptual.</div>
+        <div class="gramatica-layout">
+          <div class="nivel-rail" id="nivel-rail"></div>
+
+          <div class="gramatica-panel">
+            <div id="temas-list"></div>
+          </div>
         </div>
+      </div>
+
+      <div class="gramatica-detail" id="gramatica-detail" hidden>
+        <button type="button" class="vocab-back" id="gramatica-back">&larr; Volver a temas</button>
+        <div class="meta" id="meta"></div>
+        <h2 class="gramatica-detail-title" id="gramatica-detail-title"></h2>
+        <div class="resultado vacio" id="resultado">Buscando el tema...</div>
       </div>
     </section>
 
@@ -828,10 +856,18 @@ const nivelRail = document.getElementById('nivel-rail');
 const temasList = document.getElementById('temas-list');
 const metaDiv = document.getElementById('meta');
 const resultadoDiv = document.getElementById('resultado');
+const gramaticaSelector = document.getElementById('gramatica-selector');
+const gramaticaDetail = document.getElementById('gramatica-detail');
+const gramaticaDetailTitle = document.getElementById('gramatica-detail-title');
 
 let nivelActivo = 'B1';
 let grupoAbierto = null;
 let subtemaSeleccionado = null;
+
+document.getElementById('gramatica-back').addEventListener('click', () => {
+  gramaticaDetail.hidden = true;
+  gramaticaSelector.hidden = false;
+});
 
 function renderNivelRail() {
   nivelRail.innerHTML = '';
@@ -846,7 +882,6 @@ function renderNivelRail() {
       grupoAbierto = null;
       subtemaSeleccionado = null;
       metaDiv.textContent = '';
-      setResultado('Elegí un tema para ver el mapa conceptual.', 'vacio');
       renderNivelRail();
       renderTemas();
     });
@@ -885,8 +920,11 @@ function renderTemas() {
       item.innerHTML = `<div class="titulo">${escapeHtml(topic.title)}</div><div class="nota">${escapeHtml(topic.note)}</div>`;
       item.addEventListener('click', () => {
         subtemaSeleccionado = key;
-        metaDiv.textContent = `Nivel ${nivelActivo} · ${grupo.name} - ${topic.title}`;
+        metaDiv.textContent = `Nivel ${nivelActivo} · ${grupo.name}`;
+        gramaticaDetailTitle.textContent = topic.title;
         renderTemas();
+        gramaticaSelector.hidden = true;
+        gramaticaDetail.hidden = false;
         buscarExplicacion(nivelActivo, topic.title);
       });
       temasWrap.appendChild(item);
@@ -950,7 +988,7 @@ function renderMapaConceptual(data) {
   setResultado(`
     <div class="explicacion-breve">${escapeHtml(data.explicacion || '')}</div>
     <div class="mapa-conceptual">${casosHtml}</div>
-  `);
+  `, 'mapa');
 }
 
 function escapeHtml(str) {
