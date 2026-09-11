@@ -262,7 +262,10 @@
     padding: 6px 10px;
     border-radius: 20px;
     flex-shrink: 0;
+    text-decoration: none;
+    cursor: pointer;
   }
+  .calendario-meet:hover { background: #d3e3fd; }
   .calendario-vacio { font-size: 13px; color: var(--gris); font-style: italic; padding: 16px 0; text-align: center; }
 
   /* Placeholder views */
@@ -722,10 +725,10 @@
         <div class="card">
           <h3>Progreso semanal</h3>
           <div class="racha-top">
-            <div class="flame-badge">🔥</div>
+            <div class="flame-badge" id="animo-badge">😔</div>
             <div>
-              <div class="racha-num" id="racha-dias">1</div>
-              <div class="racha-label">Días de racha</div>
+              <div class="racha-num" id="puntos-semana-mood-num">0</div>
+              <div class="racha-label">Puntos de la semana</div>
             </div>
           </div>
           <div class="week-row" id="week-row"></div>
@@ -875,30 +878,71 @@ DIAS_SEMANA.forEach(d => {
   weekRow.appendChild(cell);
 });
 
-const CALENDARIO_SEMANA = [
-  { dia: 'LUN', num: '15', titulo: 'Clase con Valeria', hora: '18:00 - 19:00', meet: true },
-  { dia: 'MIÉ', num: '17', titulo: 'Conversación en comunidad: Work and Employment', hora: '19:00 - 19:30', meet: true },
-  { dia: 'VIE', num: '19', titulo: 'Repaso de gramática', hora: '17:30 - 18:00', meet: false }
-];
+/* ---------- Puntos de la semana: ánimo del "fuegito" ---------- */
+const PUNTOS_SEMANA = 0; // placeholder hasta que exista la lógica real de puntos
+const PUNTOS_META_SEMANAL = 100;
+
+function animoPorPuntos(puntos) {
+  if (puntos >= 100) return '🔥';
+  if (puntos >= 50) return '😊';
+  return '😔';
+}
+
+function actualizarPuntosSemana(puntos) {
+  const pct = Math.max(0, Math.min(100, Math.round((puntos / PUNTOS_META_SEMANAL) * 100)));
+  document.getElementById('animo-badge').textContent = animoPorPuntos(puntos);
+  document.getElementById('puntos-semana-mood-num').textContent = puntos;
+  document.getElementById('puntos-semana-num').textContent = puntos;
+  document.getElementById('puntos-semana-fill').style.width = pct + '%';
+}
+actualizarPuntosSemana(PUNTOS_SEMANA);
+
+/* ---------- Mi calendario de esta semana (datos reales del calendario de Google) ---------- */
+const CALENDARIO_WEBHOOK_URL = "https://dominioservicion8nfacundo.cloud/webhook/valeria-mi-calendario-semanal";
 const calendarioSemana = document.getElementById('calendario-semana');
 const iconoMeet = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11l-4 4Z"/></svg>';
-if (CALENDARIO_SEMANA.length) {
-  CALENDARIO_SEMANA.forEach(ev => {
+
+async function cargarCalendarioSemana() {
+  calendarioSemana.innerHTML = '<div class="calendario-vacio">Cargando tu calendario...</div>';
+  try {
+    const res = await fetch(CALENDARIO_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    renderCalendarioSemana(data.eventos || []);
+  } catch (err) {
+    calendarioSemana.innerHTML = '<div class="calendario-vacio">No se pudo cargar el calendario (' + escapeHtml(err.message) + ').</div>';
+  }
+}
+
+function renderCalendarioSemana(eventos) {
+  calendarioSemana.innerHTML = '';
+  if (!eventos.length) {
+    calendarioSemana.innerHTML = '<div class="calendario-vacio">No tenés clases programadas esta semana.</div>';
+    return;
+  }
+  eventos.forEach(ev => {
     const item = document.createElement('div');
     item.className = 'calendario-item';
+    const meetHtml = ev.meetLink
+      ? `<a href="${escapeHtml(ev.meetLink)}" target="_blank" rel="noopener" class="calendario-meet">${iconoMeet}Meet</a>`
+      : '';
     item.innerHTML = `
-      <div class="calendario-dia"><div class="num">${ev.num}</div><div class="abbr">${ev.dia}</div></div>
+      <div class="calendario-dia"><div class="num">${escapeHtml(String(ev.num || ''))}</div><div class="abbr">${escapeHtml(ev.dia || '')}</div></div>
       <div class="calendario-info">
-        <div class="titulo">${escapeHtml(ev.titulo)}</div>
-        <div class="hora">${escapeHtml(ev.hora)}</div>
+        <div class="titulo">${escapeHtml(ev.titulo || '')}</div>
+        <div class="hora">${escapeHtml(ev.hora || '')}</div>
       </div>
-      ${ev.meet ? `<div class="calendario-meet">${iconoMeet}Meet</div>` : ''}
+      ${meetHtml}
     `;
     calendarioSemana.appendChild(item);
   });
-} else {
-  calendarioSemana.innerHTML = '<div class="calendario-vacio">No tenés clases programadas esta semana.</div>';
 }
+
+cargarCalendarioSemana();
 
 /* ---------- Vocabulario: categorías ---------- */
 const VOCAB_CATEGORIAS = [
