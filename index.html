@@ -221,25 +221,49 @@
   .progress-bar .fill { height: 100%; background: var(--celeste); }
   .tiempo-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--gris); margin-top: 14px; }
 
-  /* Niveles circulares */
-  .niveles-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 14px;
+  /* Puntos de la semana (dentro de la card Progreso semanal) */
+  .puntos-semana-block { margin-top: 18px; }
+  .puntos-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+    font-size: 12px;
+    color: var(--gris);
   }
-  .nivel-circ { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-  .nivel-circ .ring {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
+  .puntos-header .puntos-valor { color: var(--celeste-dark); font-weight: 700; font-size: 13px; }
+  .puntos-header .puntos-valor strong { font-size: 15px; }
+
+  /* Mi calendario de la semana */
+  .calendario-semana { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+  .calendario-item {
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--celeste-dark);
+    gap: 14px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg);
   }
-  .nivel-circ span.lbl { font-size: 11px; color: var(--gris); }
+  .calendario-dia { width: 44px; flex-shrink: 0; text-align: center; }
+  .calendario-dia .num { font-size: 18px; font-weight: 700; color: var(--azul-oscuro); line-height: 1; }
+  .calendario-dia .abbr { font-size: 10px; color: var(--gris); text-transform: uppercase; letter-spacing: .03em; }
+  .calendario-info { flex: 1; min-width: 0; }
+  .calendario-info .titulo { font-size: 13px; font-weight: 600; color: var(--texto); }
+  .calendario-info .hora { font-size: 12px; color: var(--gris); margin-top: 2px; }
+  .calendario-meet {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: #e8f0fe;
+    color: #1a73e8;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 6px 10px;
+    border-radius: 20px;
+    flex-shrink: 0;
+  }
+  .calendario-vacio { font-size: 13px; color: var(--gris); font-style: italic; padding: 16px 0; text-align: center; }
 
   /* Placeholder views */
   .placeholder {
@@ -706,6 +730,13 @@
           </div>
           <div class="week-row" id="week-row"></div>
           <div class="streak-msg">¡Muy bien! Ya va 1 día seguido. Volvé mañana para extender tu racha.</div>
+          <div class="puntos-semana-block">
+            <div class="puntos-header">
+              <span>Puntos esta semana</span>
+              <span class="puntos-valor"><strong id="puntos-semana-num">0</strong> / 100</span>
+            </div>
+            <div class="progress-bar"><div class="fill" id="puntos-semana-fill" style="width:0%;"></div></div>
+          </div>
         </div>
 
         <div class="card seguir-card">
@@ -728,8 +759,8 @@
       </div>
 
       <div class="card">
-        <h3>Progreso por nivel</h3>
-        <div class="niveles-grid" id="niveles-grid"></div>
+        <h3>Mi calendario de esta semana</h3>
+        <div class="calendario-semana" id="calendario-semana"></div>
       </div>
     </section>
 
@@ -844,23 +875,30 @@ DIAS_SEMANA.forEach(d => {
   weekRow.appendChild(cell);
 });
 
-const NIVELES = [
-  { n: 1, pct: 35 }, { n: 2, pct: 35 }, { n: 3, pct: 34 },
-  { n: 4, pct: 33 }, { n: 5, pct: 100 }, { n: 6, pct: 25 }
+const CALENDARIO_SEMANA = [
+  { dia: 'LUN', num: '15', titulo: 'Clase con Valeria', hora: '18:00 - 19:00', meet: true },
+  { dia: 'MIÉ', num: '17', titulo: 'Conversación en comunidad: Work and Employment', hora: '19:00 - 19:30', meet: true },
+  { dia: 'VIE', num: '19', titulo: 'Repaso de gramática', hora: '17:30 - 18:00', meet: false }
 ];
-const nivelesGrid = document.getElementById('niveles-grid');
-NIVELES.forEach(nv => {
-  const el = document.createElement('div');
-  el.className = 'nivel-circ';
-  const color = nv.pct >= 100 ? '#31AECD' : '#31AECD';
-  el.innerHTML = `
-    <div class="ring" style="background: conic-gradient(${color} ${nv.pct * 3.6}deg, var(--gris-claro) 0deg);">
-      <div style="width:44px;height:44px;border-radius:50%;background:var(--blanco);display:flex;align-items:center;justify-content:center;">${nv.pct}%</div>
-    </div>
-    <span class="lbl">Nivel ${nv.n}</span>
-  `;
-  nivelesGrid.appendChild(el);
-});
+const calendarioSemana = document.getElementById('calendario-semana');
+const iconoMeet = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11l-4 4Z"/></svg>';
+if (CALENDARIO_SEMANA.length) {
+  CALENDARIO_SEMANA.forEach(ev => {
+    const item = document.createElement('div');
+    item.className = 'calendario-item';
+    item.innerHTML = `
+      <div class="calendario-dia"><div class="num">${ev.num}</div><div class="abbr">${ev.dia}</div></div>
+      <div class="calendario-info">
+        <div class="titulo">${escapeHtml(ev.titulo)}</div>
+        <div class="hora">${escapeHtml(ev.hora)}</div>
+      </div>
+      ${ev.meet ? `<div class="calendario-meet">${iconoMeet}Meet</div>` : ''}
+    `;
+    calendarioSemana.appendChild(item);
+  });
+} else {
+  calendarioSemana.innerHTML = '<div class="calendario-vacio">No tenés clases programadas esta semana.</div>';
+}
 
 /* ---------- Vocabulario: categorías ---------- */
 const VOCAB_CATEGORIAS = [
