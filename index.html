@@ -540,6 +540,56 @@
   }
   .caso-ejemplos li { margin-bottom: 4px; }
 
+  /* ---------- Lectura view: texto + preguntas de comprensión ---------- */
+  .lectura-detail { max-width: 640px; }
+  .lectura-texto {
+    margin-bottom: 10px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+    line-height: 1.7;
+    font-size: 14.5px;
+  }
+  .lectura-titulo {
+    color: var(--azul-oscuro);
+    font-size: 20px;
+    margin: 6px 0 14px;
+  }
+  .lectura-fuente {
+    margin: 0 0 22px;
+    font-size: 12px;
+    color: var(--gris);
+    font-style: italic;
+  }
+  .preguntas-lectura { display: flex; flex-direction: column; gap: 18px; }
+  .pregunta-lectura {
+    background: var(--blanco);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+  }
+  .pregunta-lectura .enunciado {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--texto);
+    margin-bottom: 12px;
+  }
+  .opciones-lectura { display: flex; flex-direction: column; gap: 8px; }
+  .opcion-lectura {
+    text-align: left;
+    background: var(--gris-claro);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--texto);
+    cursor: pointer;
+  }
+  .opcion-lectura:hover:not(:disabled) { border-color: var(--celeste); }
+  .opcion-lectura:disabled { cursor: default; }
+  .opcion-lectura.correcta { background: #e6f6ea; border-color: #2f9e51; color: #1e6b37; }
+  .opcion-lectura.incorrecta { background: #fdecec; border-color: #c0392b; color: #a12727; }
+
   /* ---------- Comunidad view: temas y sesiones ---------- */
   .tema-grid {
     display: grid;
@@ -806,12 +856,23 @@
 
     <!-- ---------------- LECTURA ---------------- -->
     <section class="view" id="view-lectura">
-      <h1 class="greeting">Lectura</h1>
-      <p class="greeting-sub">Próximamente.</p>
-      <div class="placeholder">
-        <div class="icon-big">📖</div>
-        <h2>Todavía no hay contenido acá</h2>
-        <p>Esta sección se va a sumar más adelante.</p>
+
+      <div class="lectura-selector" id="lectura-selector">
+        <h1 class="greeting">Lectura</h1>
+        <p class="greeting-sub">Elegí tu nivel y un tema para leer un texto real y responder preguntas de comprensión.</p>
+
+        <div class="gramatica-layout">
+          <div class="nivel-rail" id="lectura-nivel-rail"></div>
+
+          <div class="gramatica-panel">
+            <div class="tema-grid" id="lectura-tema-grid"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="lectura-detail" id="lectura-detail" hidden>
+        <button type="button" class="vocab-back" id="lectura-back">&larr; Volver a temas</button>
+        <div class="resultado vacio loading" id="lectura-resultado">Buscando una lectura...</div>
       </div>
     </section>
 
@@ -1267,6 +1328,163 @@ function escapeHtml(str) {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
+}
+
+/* ---------- Lectura ---------- */
+const NIVELES_LECTURA = {
+  'Básico': [{ title: 'Business' }],
+  'Intermedio': [{ title: 'Business' }],
+  'Avanzado': [{ title: 'Business' }]
+};
+
+const LECTURA_WEBHOOK_URL = "https://dominioservicion8nfacundo.cloud/webhook/valeria-lectura-buscar";
+
+const lecturaNivelRail = document.getElementById('lectura-nivel-rail');
+const lecturaTemaGrid = document.getElementById('lectura-tema-grid');
+const lecturaSelector = document.getElementById('lectura-selector');
+const lecturaDetail = document.getElementById('lectura-detail');
+const lecturaResultado = document.getElementById('lectura-resultado');
+
+let nivelLecturaActivo = 'Básico';
+
+document.getElementById('lectura-back').addEventListener('click', () => {
+  lecturaDetail.hidden = true;
+  lecturaSelector.hidden = false;
+});
+
+function renderNivelRailLectura() {
+  lecturaNivelRail.innerHTML = '';
+  Object.keys(NIVELES_LECTURA).forEach(nivel => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'nivel-btn' + (nivel === nivelLecturaActivo ? ' active' : '');
+    btn.textContent = nivel.slice(0, 3);
+    btn.title = nivel;
+    btn.addEventListener('click', () => {
+      if (nivel === nivelLecturaActivo) return;
+      nivelLecturaActivo = nivel;
+      renderNivelRailLectura();
+      renderTemasLectura();
+    });
+    lecturaNivelRail.appendChild(btn);
+  });
+}
+
+function renderTemasLectura() {
+  lecturaTemaGrid.innerHTML = '';
+  const temas = NIVELES_LECTURA[nivelLecturaActivo] || [];
+  temas.forEach(tema => {
+    const card = document.createElement('div');
+    card.className = 'tema-card';
+    card.innerHTML = `
+      <div class="icon">📖</div>
+      <h3>${escapeHtml(tema.title)}</h3>
+      <p>Nivel ${escapeHtml(nivelLecturaActivo)}</p>
+    `;
+    card.addEventListener('click', () => {
+      lecturaSelector.hidden = true;
+      lecturaDetail.hidden = false;
+      buscarLectura(nivelLecturaActivo, tema.title);
+    });
+    lecturaTemaGrid.appendChild(card);
+  });
+}
+
+renderNivelRailLectura();
+renderTemasLectura();
+
+function setLecturaResultado(html, cls) {
+  lecturaResultado.className = 'resultado' + (cls ? ' ' + cls : '');
+  lecturaResultado.innerHTML = html;
+}
+
+async function buscarLectura(nivel, tema) {
+  setLecturaResultado('Buscando una lectura para vos... la primera vez puede tardar unos segundos.', 'vacio loading');
+  try {
+    const res = await fetch(LECTURA_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nivel, tema })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+
+    if (!data.encontrado) {
+      setLecturaResultado('Todavía no hay una lectura disponible para "' + escapeHtml(tema) + '".', 'vacio');
+      return;
+    }
+
+    renderLectura(data);
+  } catch (err) {
+    setLecturaResultado(
+      'No se pudo generar la lectura (' + escapeHtml(err.message) + ').<br>' +
+      'Puede ser un tema de CORS al abrir este archivo directo desde el disco, o que el webhook esté caído. ' +
+      'Probá servir esta carpeta con un servidor local (ej. <code>npx serve</code>) en vez de abrir el .html directo.',
+      'error'
+    );
+  }
+}
+
+function renderLectura(data) {
+  const preguntas = Array.isArray(data.preguntas) ? data.preguntas : [];
+  const preguntasHtml = preguntas.map((p, idx) => {
+    const opciones = Array.isArray(p.opciones) ? p.opciones : [];
+    return `
+      <div class="pregunta-lectura" data-pregunta="${idx}">
+        <div class="enunciado">${idx + 1}. ${escapeHtml(p.pregunta || '')}</div>
+        <div class="opciones-lectura">
+          ${opciones.map((o, oIdx) => `<button type="button" class="opcion-lectura" data-idx="${oIdx}">${escapeHtml(o)}</button>`).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  setLecturaResultado(`
+    <h2 class="lectura-titulo">${escapeHtml(data.titulo || '')}</h2>
+    <div class="lectura-texto">${escapeHtml(data.texto || '')}</div>
+    ${data.fuente ? `<p class="lectura-fuente">Basado en una noticia real: ${escapeHtml(data.fuente)}</p>` : ''}
+    <div class="preguntas-lectura">${preguntasHtml}</div>
+  `, 'mapa');
+
+  preguntas.forEach((p, idx) => {
+    const opciones = Array.isArray(p.opciones) ? p.opciones : [];
+    const preguntaEl = lecturaResultado.querySelector('.pregunta-lectura[data-pregunta="' + idx + '"]');
+    if (!preguntaEl) return;
+    const botones = preguntaEl.querySelectorAll('.opcion-lectura');
+    botones.forEach((btn, bIdx) => {
+      btn.addEventListener('click', () => {
+        botones.forEach((b, i) => {
+          b.disabled = true;
+          if (esOpcionCorrecta(opciones[i], p.respuesta, i)) {
+            b.classList.add('correcta');
+          } else if (i === bIdx) {
+            b.classList.add('incorrecta');
+          }
+        });
+      });
+    });
+  });
+}
+
+// El modelo a veces devuelve "respuesta" como el texto completo de la opción
+// correcta, y otras veces como solo la letra (ej. "A") de una opción con
+// formato "A. Texto...". Esta función soporta ambos casos.
+function normalizarOpcionLectura(str) {
+  return String(str || '').trim().replace(/^[A-Da-d]\s*[.):-]\s*/, '').toLowerCase();
+}
+
+function esOpcionCorrecta(opcion, respuesta, index) {
+  const respuestaTexto = String(respuesta || '').trim();
+  if (normalizarOpcionLectura(opcion) === normalizarOpcionLectura(respuestaTexto)) return true;
+
+  const soloLetra = respuestaTexto.match(/^([A-Da-d])[.):]?$/);
+  if (soloLetra) {
+    const letraRespuesta = soloLetra[1].toUpperCase();
+    if (String.fromCharCode(65 + index) === letraRespuesta) return true;
+    const letraOpcion = String(opcion || '').trim().match(/^([A-Da-d])[.):]/);
+    if (letraOpcion && letraOpcion[1].toUpperCase() === letraRespuesta) return true;
+  }
+  return false;
 }
 
 /* ---------- Conversaciones en comunidad ---------- */
