@@ -15,7 +15,7 @@
     --gris: #6B6B6B;
     --gris-claro: #F2F2F2;
     --blanco: #FFFFFF;
-    --bg: #F7F9FA;
+    --bg: #EFF8FB;
     --border: #E5EAEE;
     --texto: #1A1A1A;
   }
@@ -733,6 +733,59 @@
   }
   .tema-card h3 { margin: 0 0 4px; font-size: 15px; color: var(--azul-oscuro); }
   .tema-card p { margin: 0; font-size: 12px; color: var(--gris); }
+
+  /* ---------- Comunidad view: titulo centrado + tarjetas de categoria ---------- */
+  #view-comunidad .greeting, #view-comunidad .greeting-sub { text-align: center; }
+  #view-comunidad .greeting-sub { max-width: 540px; margin-left: auto; margin-right: auto; }
+
+  .comunidad-card {
+    position: relative;
+    min-height: 150px;
+    border-radius: 14px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 20px;
+    cursor: pointer;
+    filter: saturate(55%) brightness(1.08);
+    transition: transform .15s ease, box-shadow .15s ease, filter .25s ease;
+  }
+  .comunidad-card:hover {
+    filter: saturate(100%) brightness(1);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 26px rgba(14, 62, 130, 0.28);
+  }
+  .comunidad-card.proximamente { cursor: default; }
+  .comunidad-card:nth-child(1) { background: linear-gradient(135deg, var(--celeste) 0%, var(--azul-oscuro) 100%); }
+  .comunidad-card:nth-child(2) { background: linear-gradient(110deg, var(--celeste-dark) 0%, var(--celeste) 40%, var(--azul-oscuro) 100%); }
+  .comunidad-card:nth-child(3) { background: linear-gradient(160deg, var(--azul-oscuro) 0%, var(--celeste-dark) 55%, var(--celeste) 100%); }
+  .comunidad-card:nth-child(4) { background: linear-gradient(200deg, var(--celeste) 15%, var(--azul-oscuro) 90%); }
+  .comunidad-card:nth-child(5) { background: linear-gradient(75deg, var(--azul-oscuro) 0%, var(--celeste) 100%); }
+  .comunidad-card:nth-child(6) { background: radial-gradient(circle at 30% 25%, var(--celeste) 0%, var(--azul-oscuro) 78%); }
+  .comunidad-card-nombre {
+    color: var(--blanco);
+    font-weight: 700;
+    font-size: 15px;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+    z-index: 1;
+  }
+  .comunidad-card-cta {
+    position: absolute;
+    inset: auto 0 0 0;
+    padding: 10px 0;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--blanco);
+    background: rgba(14, 62, 130, 0.55);
+    transform: translateY(100%);
+    opacity: 0;
+    transition: transform .2s ease, opacity .2s ease;
+  }
+  .comunidad-card:hover .comunidad-card-cta { transform: translateY(0); opacity: 1; }
+  .comunidad-card.proximamente .comunidad-card-cta { background: rgba(26, 26, 26, 0.55); }
 
   .back-link {
     background: none;
@@ -1827,6 +1880,15 @@ function esOpcionCorrecta(opcion, respuesta, index) {
 const COMUNIDAD_BUSCAR_URL = "https://dominioservicion8nfacundo.cloud/webhook/valeria-conversaciones-buscar";
 const COMUNIDAD_PARTICIPAR_URL = "https://dominioservicion8nfacundo.cloud/webhook/valeria-conversaciones-participar";
 
+const COMUNIDAD_CATEGORIAS = [
+  'Hobbies and Free Time',
+  'Travel and Tourism',
+  'Work and Employment',
+  'Food and Dining Out',
+  'Media and Entertainment',
+  'Future Goals and Plans'
+];
+
 const comunidadGrid = document.getElementById('comunidad-grid');
 const comunidadDetail = document.getElementById('comunidad-detail');
 const comunidadDetailTitle = document.getElementById('comunidad-detail-title');
@@ -1857,8 +1919,22 @@ document.querySelector('.nav-item[data-view="comunidad"]').addEventListener('cli
   }
 });
 
+function renderGridComunidad() {
+  comunidadGrid.innerHTML = '';
+  COMUNIDAD_CATEGORIAS.forEach(nombre => {
+    const card = document.createElement('div');
+    card.className = 'comunidad-card proximamente';
+    card.dataset.nombre = nombre;
+    card.innerHTML = `
+      <div class="comunidad-card-nombre">${escapeHtml(nombre)}</div>
+      <div class="comunidad-card-cta">Próximamente</div>
+    `;
+    comunidadGrid.appendChild(card);
+  });
+}
+
 async function cargarTemasComunidad() {
-  comunidadGrid.innerHTML = '<div class="sin-sesiones">Cargando temas...</div>';
+  renderGridComunidad();
   try {
     const res = await fetch(COMUNIDAD_BUSCAR_URL, {
       method: 'POST',
@@ -1868,28 +1944,62 @@ async function cargarTemasComunidad() {
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     const temas = data.temas || [];
-    comunidadGrid.innerHTML = '';
-    if (!temas.length) {
-      comunidadGrid.innerHTML = '<div class="sin-sesiones">Todavía no hay temas de conversación cargados.</div>';
-      return;
-    }
-    temas.forEach(tema => {
-      const card = document.createElement('div');
-      card.className = 'tema-card';
-      card.innerHTML = `
-        <div class="icon">💬</div>
-        <h3>${escapeHtml(tema.nombre)}</h3>
-        <p>Conversación en pareja con otro alumno</p>
-      `;
-      card.addEventListener('click', () => abrirTemaComunidad(tema.id, tema.nombre));
-      comunidadGrid.appendChild(card);
-    });
+    temas.forEach(tema => activarCategoriaComunidad(tema));
   } catch (err) {
-    comunidadGrid.innerHTML = '<div class="sin-sesiones">No se pudieron cargar los temas (' + escapeHtml(err.message) + ').</div>';
+    /* si falla, las 6 tarjetas quedan en "Próximamente" */
   }
 }
 
-async function abrirTemaComunidad(temaId, nombre) {
+function activarCategoriaComunidad(tema) {
+  const card = [...comunidadGrid.children].find(el => el.dataset.nombre === tema.nombre);
+  if (!card) return;
+  card.classList.remove('proximamente');
+  card.classList.add('activa');
+  card.dataset.temaId = tema.id;
+
+  const cta = card.querySelector('.comunidad-card-cta');
+  card.addEventListener('click', (e) => {
+    if (e.target.closest('.comunidad-card-cta')) return;
+    abrirTemaComunidad(tema.id, tema.nombre);
+  });
+  cta.addEventListener('click', (e) => {
+    e.stopPropagation();
+    abrirTemaComunidad(tema.id, tema.nombre, { foco: cta.dataset.foco });
+  });
+
+  cargarEstadoBotonComunidad(cta, tema.id);
+}
+
+async function cargarEstadoBotonComunidad(cta, temaId) {
+  try {
+    const res = await fetch(COMUNIDAD_BUSCAR_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tema_id: temaId })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    const hayAbiertas = (data.sesiones_abiertas || []).length > 0;
+    cta.textContent = hayAbiertas ? 'Participar' : 'Solicitar';
+    cta.dataset.foco = hayAbiertas ? 'sesiones' : 'horario';
+  } catch (err) {
+    cta.textContent = 'Participar';
+    cta.dataset.foco = 'sesiones';
+  }
+}
+
+function aplicarFocoComunidad(foco) {
+  requestAnimationFrame(() => {
+    if (foco === 'horario') {
+      comunidadHorarioInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      comunidadHorarioInput.focus();
+    } else if (foco === 'sesiones') {
+      comunidadSesionesList.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+}
+
+async function abrirTemaComunidad(temaId, nombre, opciones = {}) {
   comunidadTemaActivo = { id: temaId, nombre };
   comunidadDetailTitle.textContent = nombre;
   comunidadPregunta.textContent = '';
@@ -1897,6 +2007,7 @@ async function abrirTemaComunidad(temaId, nombre) {
   comunidadResultado.hidden = true;
   comunidadGrid.hidden = true;
   comunidadDetail.hidden = false;
+  if (opciones.foco) aplicarFocoComunidad(opciones.foco);
 
   try {
     const res = await fetch(COMUNIDAD_BUSCAR_URL, {
