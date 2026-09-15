@@ -396,6 +396,121 @@
   }
   .vocab-word-card .traduccion { font-size: 12px; color: var(--gris); }
 
+  /* ---------- Vocabulario: carrusel de flashcards ---------- */
+  .vocab-carousel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 18px;
+  }
+  .vocab-carousel-arrow {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: var(--celeste-bg);
+    color: var(--celeste-dark);
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background .15s ease, color .15s ease;
+  }
+  .vocab-carousel-arrow:hover:not(:disabled) { background: var(--celeste); color: var(--blanco); }
+  .vocab-carousel-arrow:disabled { opacity: .35; cursor: default; }
+  .vocab-carousel-viewport {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 420px;
+    width: 100%;
+    overflow: hidden;
+  }
+  .vocab-carousel-card {
+    width: 100%;
+    max-width: 380px;
+    box-shadow: 0 10px 24px rgba(14, 62, 130, 0.12);
+  }
+  .vocab-carousel-peek {
+    flex-shrink: 0;
+    width: 18px;
+    align-self: stretch;
+    background: var(--blanco);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    opacity: .5;
+    transform: scale(.92);
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .vocab-carousel-contador {
+    text-align: center;
+    color: var(--gris);
+    font-size: 12px;
+    margin-top: 8px;
+  }
+
+  /* ---------- Vocabulario: quiz de completar con drag-and-drop ---------- */
+  .vocab-quiz-trigger { text-align: center; margin: 22px 0; }
+  .vocab-quiz-wrap[hidden] { display: none; }
+  .vocab-quiz-bank {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 14px;
+    background: var(--celeste-bg);
+    border-radius: 10px;
+    margin-bottom: 18px;
+    min-height: 52px;
+  }
+  .vocab-chip {
+    background: var(--blanco);
+    border: 1px solid var(--celeste);
+    color: var(--celeste-dark);
+    border-radius: 999px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: grab;
+  }
+  .vocab-chip.dragging { opacity: .4; }
+  .vocab-quiz-oraciones {
+    padding-left: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--texto);
+  }
+  .vocab-blank {
+    display: inline-block;
+    min-width: 90px;
+    border-bottom: 2px dashed var(--celeste);
+    padding: 2px 6px;
+    margin: 0 2px;
+    border-radius: 4px;
+    vertical-align: bottom;
+  }
+  .vocab-blank.drag-over { background: var(--celeste-bg); }
+  .vocab-blank.filled { border-bottom-style: solid; }
+  .vocab-blank-correcta { background: #e6f6ea; border-bottom-color: #2f9e51; }
+  .vocab-blank-incorrecta { background: #fdecec; border-bottom-color: #c0392b; }
+  .vocab-blank-vacia { border-bottom-style: dotted; }
+  .vocab-quiz-acciones {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 18px;
+  }
+  .vocab-quiz-resumen { margin-top: 12px; font-size: 13px; font-weight: 600; }
+  .vocab-quiz-resumen .correcta { color: #1e6b37; }
+  .vocab-quiz-resumen .incorrecta { color: #a12727; }
+  .vocab-quiz-sin-responder { color: var(--gris); font-weight: 500; }
+
   /* ---------- Gramática view: navegación por nivel ---------- */
   .gramatica-layout {
     display: flex;
@@ -539,6 +654,56 @@
     line-height: 1.8;
   }
   .caso-ejemplos li { margin-bottom: 4px; }
+
+  /* ---------- Lectura view: texto + preguntas de comprensión ---------- */
+  .lectura-detail { max-width: 640px; }
+  .lectura-texto {
+    margin-bottom: 10px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+    line-height: 1.7;
+    font-size: 14.5px;
+  }
+  .lectura-titulo {
+    color: var(--azul-oscuro);
+    font-size: 20px;
+    margin: 6px 0 14px;
+  }
+  .lectura-fuente {
+    margin: 0 0 22px;
+    font-size: 12px;
+    color: var(--gris);
+    font-style: italic;
+  }
+  .preguntas-lectura { display: flex; flex-direction: column; gap: 18px; }
+  .pregunta-lectura {
+    background: var(--blanco);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+  }
+  .pregunta-lectura .enunciado {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--texto);
+    margin-bottom: 12px;
+  }
+  .opciones-lectura { display: flex; flex-direction: column; gap: 8px; }
+  .opcion-lectura {
+    text-align: left;
+    background: var(--gris-claro);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--texto);
+    cursor: pointer;
+  }
+  .opcion-lectura:hover:not(:disabled) { border-color: var(--celeste); }
+  .opcion-lectura:disabled { cursor: default; }
+  .opcion-lectura.correcta { background: #e6f6ea; border-color: #2f9e51; color: #1e6b37; }
+  .opcion-lectura.incorrecta { background: #fdecec; border-color: #c0392b; color: #a12727; }
 
   /* ---------- Comunidad view: temas y sesiones ---------- */
   .tema-grid {
@@ -806,12 +971,23 @@
 
     <!-- ---------------- LECTURA ---------------- -->
     <section class="view" id="view-lectura">
-      <h1 class="greeting">Lectura</h1>
-      <p class="greeting-sub">Próximamente.</p>
-      <div class="placeholder">
-        <div class="icon-big">📖</div>
-        <h2>Todavía no hay contenido acá</h2>
-        <p>Esta sección se va a sumar más adelante.</p>
+
+      <div class="lectura-selector" id="lectura-selector">
+        <h1 class="greeting">Lectura</h1>
+        <p class="greeting-sub">Elegí tu nivel y un tema para leer un texto real y responder preguntas de comprensión.</p>
+
+        <div class="gramatica-layout">
+          <div class="nivel-rail" id="lectura-nivel-rail"></div>
+
+          <div class="gramatica-panel">
+            <div class="tema-grid" id="lectura-tema-grid"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="lectura-detail" id="lectura-detail" hidden>
+        <button type="button" class="vocab-back" id="lectura-back">&larr; Volver a temas</button>
+        <div class="resultado vacio loading" id="lectura-resultado">Buscando una lectura...</div>
       </div>
     </section>
 
@@ -995,9 +1171,22 @@ const vocabDetail = document.getElementById('vocab-detail');
 const vocabDetailTitle = document.getElementById('vocab-detail-title');
 const vocabDetailResultado = document.getElementById('vocab-detail-resultado');
 
+let vocabPalabras = [];
+let vocabCarouselIndex = 0;
+let vocabQuizItems = [];
+let vocabQuizRevisado = false;
+
+function resetVocabState() {
+  vocabPalabras = [];
+  vocabCarouselIndex = 0;
+  vocabQuizItems = [];
+  vocabQuizRevisado = false;
+}
+
 document.getElementById('vocab-back').addEventListener('click', () => {
   vocabDetail.hidden = true;
   vocabGrid.hidden = false;
+  resetVocabState();
 });
 
 async function buscarVocabulario(categoria) {
@@ -1006,6 +1195,7 @@ async function buscarVocabulario(categoria) {
   vocabDetailTitle.textContent = categoria;
   vocabDetailResultado.className = 'resultado vacio loading';
   vocabDetailResultado.textContent = 'Buscando vocabulario...';
+  resetVocabState();
   try {
     const res = await fetch(VOCAB_WEBHOOK_URL, {
       method: 'POST',
@@ -1020,19 +1210,226 @@ async function buscarVocabulario(categoria) {
       vocabDetailResultado.textContent = 'Todavía no hay vocabulario cargado para "' + categoria + '".';
       return;
     }
+    vocabPalabras = palabras;
     vocabDetailResultado.className = 'resultado mapa';
-    vocabDetailResultado.innerHTML = `<div class="vocab-word-grid">${palabras.map(p => `
-      <div class="vocab-word-card">
-        <div class="vocab-word-head"><strong>${escapeHtml(p.palabra || '')}</strong>${p.fonetica ? ` <span class="fonetica">${escapeHtml(p.fonetica)}</span>` : ''}</div>
-        <div class="definicion">${escapeHtml(p.definicion || '')}</div>
-        <div class="ejemplo">${escapeHtml(p.ejemplo || '')}</div>
-        <div class="traduccion">Traducción: ${escapeHtml(p.traduccion || '')}</div>
+    vocabDetailResultado.innerHTML = `
+      <div class="vocab-carousel" id="vocab-carousel">
+        <button type="button" class="vocab-carousel-arrow" id="vocab-carousel-prev" aria-label="Palabra anterior">&lsaquo;</button>
+        <div class="vocab-carousel-viewport">
+          <div class="vocab-carousel-peek vocab-carousel-peek-prev" id="vocab-carousel-peek-prev"></div>
+          <div class="vocab-word-card vocab-carousel-card" id="vocab-carousel-card"></div>
+          <div class="vocab-carousel-peek vocab-carousel-peek-next" id="vocab-carousel-peek-next"></div>
+        </div>
+        <button type="button" class="vocab-carousel-arrow" id="vocab-carousel-next" aria-label="Palabra siguiente">&rsaquo;</button>
       </div>
-    `).join('')}</div>`;
+      <div class="vocab-carousel-contador" id="vocab-carousel-contador"></div>
+
+      <div class="vocab-quiz-trigger">
+        <button type="button" class="cta-btn" id="vocab-listo-btn">Listo/a para el quiz</button>
+      </div>
+
+      <div class="vocab-quiz-wrap" id="vocab-quiz-wrap" hidden>
+        <div class="vocab-quiz-bank" id="vocab-quiz-bank"></div>
+        <ol class="vocab-quiz-oraciones" id="vocab-quiz-oraciones"></ol>
+        <div class="vocab-quiz-acciones">
+          <button type="button" class="cta-btn" id="vocab-quiz-check-btn">Revisar</button>
+          <button type="button" class="vocab-back" id="vocab-quiz-reintentar" hidden>Reintentar</button>
+        </div>
+        <div class="vocab-quiz-resumen" id="vocab-quiz-resumen"></div>
+      </div>
+    `;
+    initVocabCarousel();
+    initVocabQuizTriggers();
   } catch (err) {
     vocabDetailResultado.className = 'resultado error';
     vocabDetailResultado.textContent = 'No se pudo consultar el vocabulario (' + err.message + '). Probá servir esta carpeta con npx serve.';
   }
+}
+
+function vocabWordCardHtml(p) {
+  return `
+    <div class="vocab-word-head"><strong>${escapeHtml(p.palabra || '')}</strong>${p.fonetica ? ` <span class="fonetica">${escapeHtml(p.fonetica)}</span>` : ''}</div>
+    <div class="definicion">${escapeHtml(p.definicion || '')}</div>
+    <div class="ejemplo">${escapeHtml(p.ejemplo || '')}</div>
+    <div class="traduccion">Traducción: ${escapeHtml(p.traduccion || '')}</div>
+  `;
+}
+
+function initVocabCarousel() {
+  document.getElementById('vocab-carousel-prev').addEventListener('click', () => {
+    mostrarPalabraCarousel(vocabCarouselIndex - 1);
+  });
+  document.getElementById('vocab-carousel-next').addEventListener('click', () => {
+    mostrarPalabraCarousel(vocabCarouselIndex + 1);
+  });
+  mostrarPalabraCarousel(0);
+}
+
+function mostrarPalabraCarousel(idx) {
+  const max = vocabPalabras.length - 1;
+  vocabCarouselIndex = Math.max(0, Math.min(idx, max));
+  const actual = vocabPalabras[vocabCarouselIndex];
+  document.getElementById('vocab-carousel-card').innerHTML = vocabWordCardHtml(actual);
+  document.getElementById('vocab-carousel-contador').textContent = `${vocabCarouselIndex + 1} / ${vocabPalabras.length}`;
+  document.getElementById('vocab-carousel-prev').disabled = vocabCarouselIndex === 0;
+  document.getElementById('vocab-carousel-next').disabled = vocabCarouselIndex === max;
+
+  const anterior = vocabPalabras[vocabCarouselIndex - 1];
+  const siguiente = vocabPalabras[vocabCarouselIndex + 1];
+  document.getElementById('vocab-carousel-peek-prev').textContent = anterior ? (anterior.palabra || '') : '';
+  document.getElementById('vocab-carousel-peek-next').textContent = siguiente ? (siguiente.palabra || '') : '';
+}
+
+function construirRegexPalabra(texto) {
+  const escaped = texto.trim().split(/\s+/)
+    .map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    .join('\\s+');
+  return new RegExp('\\b' + escaped + '\\b', 'i');
+}
+
+function construirOracionesQuiz(palabras) {
+  const items = [];
+  palabras.forEach(p => {
+    const ejemplo = (p.ejemplo || '').trim();
+    const palabraTexto = (p.palabra || '').trim();
+    if (!ejemplo || !palabraTexto) return;
+    const claveBusqueda = palabraTexto.replace(/^to\s+/i, '');
+    if (!claveBusqueda) return;
+    const regex = construirRegexPalabra(claveBusqueda);
+    const match = regex.exec(ejemplo);
+    if (!match) return;
+    const antes = ejemplo.slice(0, match.index);
+    const despues = ejemplo.slice(match.index + match[0].length);
+    items.push({ p, antes, despues });
+  });
+  return items;
+}
+
+function iniciarQuizVocabulario() {
+  vocabQuizItems = construirOracionesQuiz(vocabPalabras);
+  vocabQuizRevisado = false;
+
+  const wrap = document.getElementById('vocab-quiz-wrap');
+  const oracionesEl = document.getElementById('vocab-quiz-oraciones');
+  const bankEl = document.getElementById('vocab-quiz-bank');
+  const resumenEl = document.getElementById('vocab-quiz-resumen');
+  const checkBtn = document.getElementById('vocab-quiz-check-btn');
+  const reintentarBtn = document.getElementById('vocab-quiz-reintentar');
+
+  resumenEl.innerHTML = '';
+  reintentarBtn.hidden = true;
+  checkBtn.disabled = false;
+
+  if (!vocabQuizItems.length) {
+    oracionesEl.innerHTML = '';
+    bankEl.innerHTML = '';
+    resumenEl.textContent = 'No hay suficientes oraciones de ejemplo para armar el quiz de esta categoría.';
+    wrap.hidden = false;
+    document.getElementById('vocab-listo-btn').hidden = true;
+    return;
+  }
+
+  oracionesEl.innerHTML = vocabQuizItems.map((item, i) => `
+    <li class="vocab-oracion">${escapeHtml(item.antes)}<span class="vocab-blank" data-quiz-idx="${i}">&nbsp;</span>${escapeHtml(item.despues)}</li>
+  `).join('');
+
+  const orden = vocabQuizItems.map((_, i) => i);
+  for (let i = orden.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [orden[i], orden[j]] = [orden[j], orden[i]];
+  }
+  bankEl.innerHTML = orden.map(i => `
+    <button type="button" class="vocab-chip" draggable="true" data-quiz-idx="${i}">${escapeHtml(vocabQuizItems[i].p.palabra || '')}</button>
+  `).join('');
+
+  wrap.hidden = false;
+  document.getElementById('vocab-listo-btn').hidden = true;
+}
+
+function colocarFicha(chip, destino) {
+  const bankEl = document.getElementById('vocab-quiz-bank');
+  const blankAnterior = chip.closest('.vocab-blank');
+  if (destino.classList.contains('vocab-blank')) {
+    const chipExistente = destino.querySelector('.vocab-chip');
+    if (chipExistente && chipExistente !== chip) bankEl.appendChild(chipExistente);
+    destino.appendChild(chip);
+    destino.classList.add('filled');
+  } else {
+    bankEl.appendChild(chip);
+  }
+  if (blankAnterior && blankAnterior !== destino) blankAnterior.classList.remove('filled');
+}
+
+function revisarQuizVocabulario() {
+  let correctas = 0, incorrectas = 0, sinResponder = 0;
+  document.querySelectorAll('#vocab-quiz-oraciones .vocab-blank').forEach(blank => {
+    blank.classList.remove('vocab-blank-correcta', 'vocab-blank-incorrecta', 'vocab-blank-vacia');
+    const chip = blank.querySelector('.vocab-chip');
+    if (!chip) {
+      blank.classList.add('vocab-blank-vacia');
+      sinResponder++;
+      incorrectas++;
+      return;
+    }
+    if (chip.dataset.quizIdx === blank.dataset.quizIdx) {
+      blank.classList.add('vocab-blank-correcta');
+      correctas++;
+    } else {
+      blank.classList.add('vocab-blank-incorrecta');
+      incorrectas++;
+    }
+  });
+
+  document.getElementById('vocab-quiz-resumen').innerHTML =
+    `<span class="correcta">${correctas} correctas</span> · <span class="incorrecta">${incorrectas} incorrectas</span>` +
+    (sinResponder ? ` <span class="vocab-quiz-sin-responder">(${sinResponder} sin responder)</span>` : '');
+
+  vocabQuizRevisado = true;
+  document.getElementById('vocab-quiz-check-btn').disabled = true;
+  document.getElementById('vocab-quiz-reintentar').hidden = false;
+}
+
+function initVocabQuizTriggers() {
+  document.getElementById('vocab-listo-btn').addEventListener('click', iniciarQuizVocabulario);
+  document.getElementById('vocab-quiz-check-btn').addEventListener('click', revisarQuizVocabulario);
+  document.getElementById('vocab-quiz-reintentar').addEventListener('click', iniciarQuizVocabulario);
+
+  const wrap = document.getElementById('vocab-quiz-wrap');
+
+  wrap.addEventListener('dragstart', (e) => {
+    const chip = e.target.closest('.vocab-chip');
+    if (!chip || vocabQuizRevisado) { e.preventDefault(); return; }
+    e.dataTransfer.setData('text/plain', chip.dataset.quizIdx);
+    e.dataTransfer.effectAllowed = 'move';
+    chip.classList.add('dragging');
+  });
+
+  wrap.addEventListener('dragend', (e) => {
+    const chip = e.target.closest('.vocab-chip');
+    if (chip) chip.classList.remove('dragging');
+  });
+
+  wrap.addEventListener('dragover', (e) => {
+    const destino = e.target.closest('.vocab-blank, #vocab-quiz-bank');
+    if (!destino || vocabQuizRevisado) return;
+    e.preventDefault();
+    if (destino.classList.contains('vocab-blank')) destino.classList.add('drag-over');
+  });
+
+  wrap.addEventListener('dragleave', (e) => {
+    const destino = e.target.closest('.vocab-blank');
+    if (destino) destino.classList.remove('drag-over');
+  });
+
+  wrap.addEventListener('drop', (e) => {
+    const destino = e.target.closest('.vocab-blank, #vocab-quiz-bank');
+    if (!destino || vocabQuizRevisado) return;
+    e.preventDefault();
+    destino.classList.remove('drag-over');
+    const idx = e.dataTransfer.getData('text/plain');
+    const chip = wrap.querySelector(`.vocab-chip[data-quiz-idx="${idx}"]`);
+    if (chip) colocarFicha(chip, destino);
+  });
 }
 
 /* ---------- Gramática: niveles CEFR (A1-B2), temas y subtemas ---------- */
@@ -1267,6 +1664,163 @@ function escapeHtml(str) {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
+}
+
+/* ---------- Lectura ---------- */
+const NIVELES_LECTURA = {
+  'Básico': [{ title: 'Business' }],
+  'Intermedio': [{ title: 'Business' }],
+  'Avanzado': [{ title: 'Business' }]
+};
+
+const LECTURA_WEBHOOK_URL = "https://dominioservicion8nfacundo.cloud/webhook/valeria-lectura-buscar";
+
+const lecturaNivelRail = document.getElementById('lectura-nivel-rail');
+const lecturaTemaGrid = document.getElementById('lectura-tema-grid');
+const lecturaSelector = document.getElementById('lectura-selector');
+const lecturaDetail = document.getElementById('lectura-detail');
+const lecturaResultado = document.getElementById('lectura-resultado');
+
+let nivelLecturaActivo = 'Básico';
+
+document.getElementById('lectura-back').addEventListener('click', () => {
+  lecturaDetail.hidden = true;
+  lecturaSelector.hidden = false;
+});
+
+function renderNivelRailLectura() {
+  lecturaNivelRail.innerHTML = '';
+  Object.keys(NIVELES_LECTURA).forEach(nivel => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'nivel-btn' + (nivel === nivelLecturaActivo ? ' active' : '');
+    btn.textContent = nivel.slice(0, 3);
+    btn.title = nivel;
+    btn.addEventListener('click', () => {
+      if (nivel === nivelLecturaActivo) return;
+      nivelLecturaActivo = nivel;
+      renderNivelRailLectura();
+      renderTemasLectura();
+    });
+    lecturaNivelRail.appendChild(btn);
+  });
+}
+
+function renderTemasLectura() {
+  lecturaTemaGrid.innerHTML = '';
+  const temas = NIVELES_LECTURA[nivelLecturaActivo] || [];
+  temas.forEach(tema => {
+    const card = document.createElement('div');
+    card.className = 'tema-card';
+    card.innerHTML = `
+      <div class="icon">📖</div>
+      <h3>${escapeHtml(tema.title)}</h3>
+      <p>Nivel ${escapeHtml(nivelLecturaActivo)}</p>
+    `;
+    card.addEventListener('click', () => {
+      lecturaSelector.hidden = true;
+      lecturaDetail.hidden = false;
+      buscarLectura(nivelLecturaActivo, tema.title);
+    });
+    lecturaTemaGrid.appendChild(card);
+  });
+}
+
+renderNivelRailLectura();
+renderTemasLectura();
+
+function setLecturaResultado(html, cls) {
+  lecturaResultado.className = 'resultado' + (cls ? ' ' + cls : '');
+  lecturaResultado.innerHTML = html;
+}
+
+async function buscarLectura(nivel, tema) {
+  setLecturaResultado('Buscando una lectura para vos... la primera vez puede tardar unos segundos.', 'vacio loading');
+  try {
+    const res = await fetch(LECTURA_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nivel, tema })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+
+    if (!data.encontrado) {
+      setLecturaResultado('Todavía no hay una lectura disponible para "' + escapeHtml(tema) + '".', 'vacio');
+      return;
+    }
+
+    renderLectura(data);
+  } catch (err) {
+    setLecturaResultado(
+      'No se pudo generar la lectura (' + escapeHtml(err.message) + ').<br>' +
+      'Puede ser un tema de CORS al abrir este archivo directo desde el disco, o que el webhook esté caído. ' +
+      'Probá servir esta carpeta con un servidor local (ej. <code>npx serve</code>) en vez de abrir el .html directo.',
+      'error'
+    );
+  }
+}
+
+function renderLectura(data) {
+  const preguntas = Array.isArray(data.preguntas) ? data.preguntas : [];
+  const preguntasHtml = preguntas.map((p, idx) => {
+    const opciones = Array.isArray(p.opciones) ? p.opciones : [];
+    return `
+      <div class="pregunta-lectura" data-pregunta="${idx}">
+        <div class="enunciado">${idx + 1}. ${escapeHtml(p.pregunta || '')}</div>
+        <div class="opciones-lectura">
+          ${opciones.map((o, oIdx) => `<button type="button" class="opcion-lectura" data-idx="${oIdx}">${escapeHtml(o)}</button>`).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  setLecturaResultado(`
+    <h2 class="lectura-titulo">${escapeHtml(data.titulo || '')}</h2>
+    <div class="lectura-texto">${escapeHtml(data.texto || '')}</div>
+    ${data.fuente ? `<p class="lectura-fuente">Basado en una noticia real: ${escapeHtml(data.fuente)}</p>` : ''}
+    <div class="preguntas-lectura">${preguntasHtml}</div>
+  `, 'mapa');
+
+  preguntas.forEach((p, idx) => {
+    const opciones = Array.isArray(p.opciones) ? p.opciones : [];
+    const preguntaEl = lecturaResultado.querySelector('.pregunta-lectura[data-pregunta="' + idx + '"]');
+    if (!preguntaEl) return;
+    const botones = preguntaEl.querySelectorAll('.opcion-lectura');
+    botones.forEach((btn, bIdx) => {
+      btn.addEventListener('click', () => {
+        botones.forEach((b, i) => {
+          b.disabled = true;
+          if (esOpcionCorrecta(opciones[i], p.respuesta, i)) {
+            b.classList.add('correcta');
+          } else if (i === bIdx) {
+            b.classList.add('incorrecta');
+          }
+        });
+      });
+    });
+  });
+}
+
+// El modelo a veces devuelve "respuesta" como el texto completo de la opción
+// correcta, y otras veces como solo la letra (ej. "A") de una opción con
+// formato "A. Texto...". Esta función soporta ambos casos.
+function normalizarOpcionLectura(str) {
+  return String(str || '').trim().replace(/^[A-Da-d]\s*[.):-]\s*/, '').toLowerCase();
+}
+
+function esOpcionCorrecta(opcion, respuesta, index) {
+  const respuestaTexto = String(respuesta || '').trim();
+  if (normalizarOpcionLectura(opcion) === normalizarOpcionLectura(respuestaTexto)) return true;
+
+  const soloLetra = respuestaTexto.match(/^([A-Da-d])[.):]?$/);
+  if (soloLetra) {
+    const letraRespuesta = soloLetra[1].toUpperCase();
+    if (String.fromCharCode(65 + index) === letraRespuesta) return true;
+    const letraOpcion = String(opcion || '').trim().match(/^([A-Da-d])[.):]/);
+    if (letraOpcion && letraOpcion[1].toUpperCase() === letraRespuesta) return true;
+  }
+  return false;
 }
 
 /* ---------- Conversaciones en comunidad ---------- */
