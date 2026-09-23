@@ -542,6 +542,14 @@
     border-color: var(--celeste);
     color: var(--blanco);
   }
+  #lectura-nivel-rail .nivel-btn {
+    width: auto;
+    min-width: 96px;
+    height: 44px;
+    padding: 0 16px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
   .gramatica-panel { flex: 1; min-width: 0; }
   .grupo {
     background: var(--blanco);
@@ -598,6 +606,17 @@
     color: #a12727;
   }
   .loading { color: var(--celeste-dark); font-style: italic; }
+  .spinner {
+    display: block;
+    width: 28px;
+    height: 28px;
+    margin: 8px auto;
+    border: 3px solid var(--border);
+    border-top-color: var(--celeste);
+    border-radius: 50%;
+    animation: girar .7s linear infinite;
+  }
+  @keyframes girar { to { transform: rotate(360deg); } }
 
   /* ---------- Gramática view: detalle de un tema (mapa conceptual) ---------- */
   .gramatica-detail { max-width: 640px; }
@@ -735,9 +754,9 @@
   .tema-card p { margin: 0; font-size: 12px; color: var(--gris); }
 
   /* ---------- Comunidad view: titulo centrado + tarjetas de categoria ---------- */
-  #view-comunidad .greeting, #view-comunidad .greeting-sub { text-align: center; }
-  #view-comunidad .greeting-sub { max-width: 540px; margin-left: auto; margin-right: auto; }
+  #view-comunidad .greeting { text-align: center; }
 
+  #comunidad-grid { grid-template-columns: 1fr; }
   .comunidad-card {
     position: relative;
     min-height: 150px;
@@ -1005,20 +1024,20 @@
         <button type="button" class="vocab-back" id="gramatica-back">&larr; Volver a temas</button>
         <div class="meta" id="meta"></div>
         <h2 class="gramatica-detail-title" id="gramatica-detail-title"></h2>
-        <div class="resultado vacio" id="resultado">Buscando el tema...</div>
+        <div class="resultado vacio loading" id="resultado"><div class="spinner"></div></div>
       </div>
     </section>
 
     <!-- ---------------- VOCABULARIO ---------------- -->
     <section class="view" id="view-vocabulario">
       <h1 class="greeting">Vocabulario</h1>
-      <p class="greeting-sub">Elegí una categoría para ver su vocabulario.</p>
+      <p class="greeting-sub">Adquirí vocabulario nuevo en el tema que más te esté faltando, y afianzalo con un breve quiz al final.</p>
 
       <div class="vocab-grid" id="vocab-grid"></div>
       <div class="vocab-detail" id="vocab-detail" hidden>
         <button type="button" class="vocab-back" id="vocab-back">&larr; Volver a categorías</button>
         <h2 id="vocab-detail-title"></h2>
-        <div class="resultado vacio" id="vocab-detail-resultado">Cargando vocabulario...</div>
+        <div class="resultado vacio loading" id="vocab-detail-resultado"><div class="spinner"></div></div>
       </div>
     </section>
 
@@ -1027,7 +1046,7 @@
 
       <div class="lectura-selector" id="lectura-selector">
         <h1 class="greeting">Lectura</h1>
-        <p class="greeting-sub">Elegí tu nivel y un tema para leer un texto real y responder preguntas de comprensión.</p>
+        <p class="greeting-sub">Elegí tu nivel y un tema: vas a leer una noticia real sobre ese tema, adaptada a tu nivel, y responder preguntas de comprensión.</p>
 
         <div class="gramatica-layout">
           <div class="nivel-rail" id="lectura-nivel-rail"></div>
@@ -1040,7 +1059,7 @@
 
       <div class="lectura-detail" id="lectura-detail" hidden>
         <button type="button" class="vocab-back" id="lectura-back">&larr; Volver a temas</button>
-        <div class="resultado vacio loading" id="lectura-resultado">Buscando una lectura...</div>
+        <div class="resultado vacio loading" id="lectura-resultado"><div class="spinner"></div></div>
       </div>
     </section>
 
@@ -1132,7 +1151,7 @@ const calendarioSemana = document.getElementById('calendario-semana');
 const iconoMeet = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11l-4 4Z"/></svg>';
 
 async function cargarCalendarioSemana() {
-  calendarioSemana.innerHTML = '<div class="calendario-vacio">Cargando tu calendario...</div>';
+  calendarioSemana.innerHTML = '<div class="calendario-vacio"><div class="spinner"></div></div>';
   try {
     const res = await fetch(CALENDARIO_WEBHOOK_URL, {
       method: 'POST',
@@ -1247,7 +1266,7 @@ async function buscarVocabulario(categoria) {
   vocabDetail.hidden = false;
   vocabDetailTitle.textContent = categoria;
   vocabDetailResultado.className = 'resultado vacio loading';
-  vocabDetailResultado.textContent = 'Buscando vocabulario...';
+  vocabDetailResultado.innerHTML = '<div class="spinner"></div>';
   resetVocabState();
   try {
     const res = await fetch(VOCAB_WEBHOOK_URL, {
@@ -1665,7 +1684,7 @@ function setResultado(html, cls) {
 }
 
 async function buscarExplicacion(nivel, tema) {
-  setResultado('Buscando el tema...', 'vacio loading');
+  setResultado('<div class="spinner"></div>', 'vacio loading');
   try {
     const res = await fetch(GRAMATICA_WEBHOOK_URL, {
       method: 'POST',
@@ -1747,7 +1766,7 @@ function renderNivelRailLectura() {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'nivel-btn' + (nivel === nivelLecturaActivo ? ' active' : '');
-    btn.textContent = nivel.slice(0, 3);
+    btn.textContent = nivel;
     btn.title = nivel;
     btn.addEventListener('click', () => {
       if (nivel === nivelLecturaActivo) return;
@@ -1788,7 +1807,7 @@ function setLecturaResultado(html, cls) {
 }
 
 async function buscarLectura(nivel, tema) {
-  setLecturaResultado('Buscando una lectura para vos... la primera vez puede tardar unos segundos.', 'vacio loading');
+  setLecturaResultado('<div class="spinner"></div>', 'vacio loading');
   try {
     const res = await fetch(LECTURA_WEBHOOK_URL, {
       method: 'POST',
@@ -2003,7 +2022,7 @@ async function abrirTemaComunidad(temaId, nombre, opciones = {}) {
   comunidadTemaActivo = { id: temaId, nombre };
   comunidadDetailTitle.textContent = nombre;
   comunidadPregunta.textContent = '';
-  comunidadSesionesList.innerHTML = '<div class="sin-sesiones">Buscando horarios abiertos...</div>';
+  comunidadSesionesList.innerHTML = '<div class="sin-sesiones"><div class="spinner"></div></div>';
   comunidadResultado.hidden = true;
   comunidadGrid.hidden = true;
   comunidadDetail.hidden = false;
@@ -2019,10 +2038,9 @@ async function abrirTemaComunidad(temaId, nombre, opciones = {}) {
     const data = await res.json();
 
     const preguntas = (data.tema && data.tema.preguntas) || [];
-    if (preguntas.length) {
-      const random = preguntas[Math.floor(Math.random() * preguntas.length)];
-      comunidadPregunta.textContent = '💡 ' + random;
-    }
+    comunidadPregunta.innerHTML = preguntas.length
+      ? preguntas.map(p => '💡 ' + escapeHtml(p)).join('<br><br>')
+      : '';
 
     renderSesionesAbiertas(data.sesiones_abiertas || []);
   } catch (err) {
