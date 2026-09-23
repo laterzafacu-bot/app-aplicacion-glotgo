@@ -558,14 +558,6 @@
     border-color: var(--celeste);
     color: var(--blanco);
   }
-  #lectura-nivel-rail .nivel-btn {
-    width: auto;
-    min-width: 96px;
-    height: 44px;
-    padding: 0 16px;
-    font-size: 13px;
-    white-space: nowrap;
-  }
   .gramatica-panel { flex: 1; min-width: 0; }
   .grupo {
     background: var(--blanco);
@@ -709,6 +701,12 @@
     font-size: 12px;
     color: var(--gris);
     font-style: italic;
+  }
+  .lectura-quiz-resumen {
+    margin-top: 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--celeste-dark);
   }
   .preguntas-lectura { display: flex; flex-direction: column; gap: 18px; }
   .pregunta-lectura {
@@ -1065,15 +1063,9 @@
 
       <div class="lectura-selector" id="lectura-selector">
         <h1 class="greeting">Lectura</h1>
-        <p class="greeting-sub">Elegí tu nivel y un tema: vas a leer una noticia real sobre ese tema, adaptada a tu nivel, y responder preguntas de comprensión.</p>
+        <p class="greeting-sub">Elegí una categoría: vas a leer una noticia real de nivel intermedio, tal cual fue publicada (sin editar), y responder un quiz de comprensión. Cada quiz bien resuelto suma 25 puntos a tu semana.</p>
 
-        <div class="gramatica-layout">
-          <div class="nivel-rail" id="lectura-nivel-rail"></div>
-
-          <div class="gramatica-panel">
-            <div class="tema-grid" id="lectura-tema-grid"></div>
-          </div>
-        </div>
+        <div class="tema-grid" id="lectura-tema-grid"></div>
       </div>
 
       <div class="lectura-detail" id="lectura-detail" hidden>
@@ -1148,8 +1140,40 @@ DIAS_SEMANA.forEach(d => {
 });
 
 /* ---------- Puntos de la semana: ánimo del "fuegito" ---------- */
-const PUNTOS_SEMANA = 0; // placeholder hasta que exista la lógica real de puntos
 const PUNTOS_META_SEMANAL = 100;
+const PUNTOS_POR_ACTIVIDAD = 25;
+
+function claveSemanaActual() {
+  const d = new Date();
+  const diasDesdeLunes = (d.getDay() + 6) % 7;
+  const lunes = new Date(d.getFullYear(), d.getMonth(), d.getDate() - diasDesdeLunes);
+  return lunes.toISOString().slice(0, 10);
+}
+
+function registroPuntosSemana() {
+  try {
+    return JSON.parse(localStorage.getItem('puntos_semana_' + claveSemanaActual()) || '{}');
+  } catch (e) {
+    return {};
+  }
+}
+
+function calcularPuntosSemana() {
+  return Object.keys(registroPuntosSemana()).length * PUNTOS_POR_ACTIVIDAD;
+}
+
+// Suma los puntos de una actividad una sola vez por semana (actividadId identifica
+// la actividad puntual, ej. "lectura:Technology & AI"). Repetirla la misma semana no vuelve a sumar.
+function otorgarPuntosActividad(actividadId) {
+  const registro = registroPuntosSemana();
+  if (registro[actividadId]) return false;
+  registro[actividadId] = true;
+  try {
+    localStorage.setItem('puntos_semana_' + claveSemanaActual(), JSON.stringify(registro));
+  } catch (e) {}
+  actualizarPuntosSemana(calcularPuntosSemana());
+  return true;
+}
 
 function animoPorPuntos(puntos) {
   if (puntos >= 100) return '🔥';
@@ -1164,7 +1188,7 @@ function actualizarPuntosSemana(puntos) {
   document.getElementById('puntos-semana-num').textContent = puntos;
   document.getElementById('puntos-semana-fill').style.width = pct + '%';
 }
-actualizarPuntosSemana(PUNTOS_SEMANA);
+actualizarPuntosSemana(calcularPuntosSemana());
 
 /* ---------- Puntos del mes: objetivo 400, acumulado a partir de los puntos semanales ---------- */
 const PUNTOS_MES = 0; // placeholder hasta que exista la lógica real de puntos
@@ -1779,86 +1803,68 @@ function escapeHtml(str) {
 }
 
 /* ---------- Lectura ---------- */
-const NIVELES_LECTURA = {
-  'Básico': [{ title: 'Business' }],
-  'Intermedio': [{ title: 'Business' }],
-  'Avanzado': [{ title: 'Business' }]
-};
+// Nivel fijo: las noticias vienen de sitios para estudiantes (ya publicadas en
+// inglés intermedio, sin que nosotros las reescribamos), así que no hace falta
+// que el alumno elija nivel — solo categoría.
+const LECTURA_NIVEL_FIJO = 'Intermedio';
+const LECTURA_CATEGORIAS = [
+  'Business & Marketing',
+  'Technology & AI',
+  'Entertainment & Pop Culture',
+  'Travel & Lifestyle',
+  'Health & Wellness',
+  'Sports & Hobbies'
+];
 
 const LECTURA_WEBHOOK_URL = "https://dominioservicion8nfacundo.cloud/webhook/valeria-lectura-buscar";
 
-const lecturaNivelRail = document.getElementById('lectura-nivel-rail');
 const lecturaTemaGrid = document.getElementById('lectura-tema-grid');
 const lecturaSelector = document.getElementById('lectura-selector');
 const lecturaDetail = document.getElementById('lectura-detail');
 const lecturaResultado = document.getElementById('lectura-resultado');
-
-let nivelLecturaActivo = 'Básico';
 
 document.getElementById('lectura-back').addEventListener('click', () => {
   lecturaDetail.hidden = true;
   lecturaSelector.hidden = false;
 });
 
-function renderNivelRailLectura() {
-  lecturaNivelRail.innerHTML = '';
-  Object.keys(NIVELES_LECTURA).forEach(nivel => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'nivel-btn' + (nivel === nivelLecturaActivo ? ' active' : '');
-    btn.textContent = nivel;
-    btn.title = nivel;
-    btn.addEventListener('click', () => {
-      if (nivel === nivelLecturaActivo) return;
-      nivelLecturaActivo = nivel;
-      renderNivelRailLectura();
-      renderTemasLectura();
-    });
-    lecturaNivelRail.appendChild(btn);
-  });
-}
-
-function renderTemasLectura() {
+function renderCategoriasLectura() {
   lecturaTemaGrid.innerHTML = '';
-  const temas = NIVELES_LECTURA[nivelLecturaActivo] || [];
-  temas.forEach(tema => {
+  LECTURA_CATEGORIAS.forEach(categoria => {
     const card = document.createElement('div');
     card.className = 'tema-card';
     card.innerHTML = `
       <div class="icon">📖</div>
-      <h3>${escapeHtml(tema.title)}</h3>
-      <p>Nivel ${escapeHtml(nivelLecturaActivo)}</p>
+      <h3>${escapeHtml(categoria)}</h3>
     `;
     card.addEventListener('click', () => {
       lecturaSelector.hidden = true;
       lecturaDetail.hidden = false;
-      buscarLectura(nivelLecturaActivo, tema.title);
+      buscarLectura(categoria);
     });
     lecturaTemaGrid.appendChild(card);
   });
 }
-
-renderNivelRailLectura();
-renderTemasLectura();
+renderCategoriasLectura();
 
 function setLecturaResultado(html, cls) {
   lecturaResultado.className = 'resultado' + (cls ? ' ' + cls : '');
   lecturaResultado.innerHTML = html;
 }
 
-async function buscarLectura(nivel, tema) {
+async function buscarLectura(categoria) {
   setLecturaResultado('<div class="spinner"></div>', 'vacio loading');
   try {
     const res = await fetch(LECTURA_WEBHOOK_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nivel, tema })
+      body: JSON.stringify({ nivel: LECTURA_NIVEL_FIJO, tema: categoria })
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
 
     if (!data.encontrado) {
-      setLecturaResultado('Todavía no hay una lectura disponible para "' + escapeHtml(tema) + '".', 'vacio');
+      setLecturaResultado('Todavía no hay una lectura disponible para "' + escapeHtml(categoria) + '".', 'vacio');
       return;
     }
 
@@ -1890,9 +1896,13 @@ function renderLectura(data) {
   setLecturaResultado(`
     <h2 class="lectura-titulo">${escapeHtml(data.titulo || '')}</h2>
     <div class="lectura-texto">${escapeHtml(data.texto || '')}</div>
-    ${data.fuente ? `<p class="lectura-fuente">Basado en una noticia real: ${escapeHtml(data.fuente)}</p>` : ''}
+    ${data.fuente ? `<p class="lectura-fuente">Texto real, tal cual publicado — Fuente: ${escapeHtml(data.fuente)}</p>` : ''}
     <div class="preguntas-lectura">${preguntasHtml}</div>
+    <div class="lectura-quiz-resumen" id="lectura-quiz-resumen"></div>
   `, 'mapa');
+
+  const resumenEl = lecturaResultado.querySelector('#lectura-quiz-resumen');
+  const estado = { respondidas: 0, correctas: 0 };
 
   preguntas.forEach((p, idx) => {
     const opciones = Array.isArray(p.opciones) ? p.opciones : [];
@@ -1901,6 +1911,7 @@ function renderLectura(data) {
     const botones = preguntaEl.querySelectorAll('.opcion-lectura');
     botones.forEach((btn, bIdx) => {
       btn.addEventListener('click', () => {
+        const acerto = esOpcionCorrecta(opciones[bIdx], p.respuesta, bIdx);
         botones.forEach((b, i) => {
           b.disabled = true;
           if (esOpcionCorrecta(opciones[i], p.respuesta, i)) {
@@ -1909,6 +1920,19 @@ function renderLectura(data) {
             b.classList.add('incorrecta');
           }
         });
+        estado.respondidas++;
+        if (acerto) estado.correctas++;
+        if (estado.respondidas === preguntas.length && resumenEl) {
+          const minimoParaPuntos = Math.ceil(preguntas.length * 0.75);
+          if (estado.correctas >= minimoParaPuntos) {
+            const sumo = otorgarPuntosActividad('lectura:' + data.tema);
+            resumenEl.textContent = sumo
+              ? `¡Bien! ${estado.correctas}/${preguntas.length} correctas — sumaste ${PUNTOS_POR_ACTIVIDAD} puntos a tu semana.`
+              : `¡Bien! ${estado.correctas}/${preguntas.length} correctas — esta categoría ya te sumó puntos esta semana.`;
+          } else {
+            resumenEl.textContent = `${estado.correctas}/${preguntas.length} correctas. Necesitás al menos ${minimoParaPuntos} para sumar los ${PUNTOS_POR_ACTIVIDAD} puntos — probá de nuevo.`;
+          }
+        }
       });
     });
   });
