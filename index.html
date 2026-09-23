@@ -208,6 +208,22 @@
     font-family: inherit;
   }
   .cta-btn:hover { background: var(--celeste-dark); }
+  .cta-select {
+    margin-top: auto;
+    background: var(--celeste);
+    color: var(--blanco);
+    border: none;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  .cta-select:hover { background: var(--celeste-dark); }
+  .cta-select option { color: var(--texto); background: var(--blanco); }
 
   .nivel-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--gris); margin-bottom: 6px; }
   .nivel-row strong { color: var(--texto); }
@@ -753,10 +769,8 @@
   .tema-card h3 { margin: 0 0 4px; font-size: 15px; color: var(--azul-oscuro); }
   .tema-card p { margin: 0; font-size: 12px; color: var(--gris); }
 
-  /* ---------- Comunidad view: titulo centrado + tarjetas de categoria ---------- */
-  #view-comunidad .greeting { text-align: center; }
-
-  #comunidad-grid { grid-template-columns: 1fr; }
+  /* ---------- Comunidad view: tarjetas de categoria ---------- */
+  #comunidad-grid { grid-template-columns: repeat(2, 1fr); }
   .comunidad-card {
     position: relative;
     min-height: 150px;
@@ -990,11 +1004,16 @@
           </div>
           <div style="margin-top:14px;">
             <div class="nivel-row"><span>Tu nivel actual: <strong>Basic English</strong></span></div>
-            <div class="nivel-row"><span>Siguiente nivel: <strong>Intermediate English</strong></span></div>
-            <div class="progress-bar" style="margin-top:10px;"><div class="fill" style="width:23%;"></div></div>
-            <div class="tiempo-row"><span>116 horas 45 minutos</span><span>500 horas</span></div>
+            <div class="progress-bar" style="margin-top:10px;"><div class="fill" id="puntos-mes-fill" style="width:0%;"></div></div>
+            <div class="tiempo-row"><span><strong id="puntos-mes-num">0</strong> puntos este mes</span><span>400 puntos</span></div>
           </div>
-          <button class="cta-btn" onclick="switchView('gramatica')">Estudiar ahora</button>
+          <select class="cta-select" id="estudiar-select">
+            <option value="" disabled selected>Elegí qué estudiar</option>
+            <option value="gramatica">Gramática</option>
+            <option value="vocabulario">Vocabulario</option>
+            <option value="lectura">Lectura</option>
+            <option value="comunidad">Conversaciones en comunidad</option>
+          </select>
         </div>
       </div>
 
@@ -1065,10 +1084,12 @@
 
     <!-- ---------------- COMUNIDAD ---------------- -->
     <section class="view" id="view-comunidad">
-      <h1 class="greeting">Conversaciones en comunidad</h1>
-      <p class="greeting-sub">Practicá inglés hablado con otro alumno. Elegí un tema, sumate a un horario que ya propusieron o proponé el tuyo — la invitación de Calendar con el link de Meet les llega sola a los dos, sin que nadie más tenga que hacer nada.</p>
+      <div class="comunidad-selector" id="comunidad-selector">
+        <h1 class="greeting">Conversaciones en comunidad</h1>
+        <p class="greeting-sub">Practicá inglés hablado con otro alumno. Elegí un tema, sumate a un horario que ya propusieron o proponé el tuyo — la invitación de Calendar con el link de Meet les llega sola a los dos, sin que nadie más tenga que hacer nada.</p>
 
-      <div class="tema-grid" id="comunidad-grid"></div>
+        <div class="tema-grid" id="comunidad-grid"></div>
+      </div>
 
       <div class="comunidad-detail" id="comunidad-detail" hidden>
         <button type="button" class="back-link" id="comunidad-back">&larr; Volver a temas</button>
@@ -1144,6 +1165,25 @@ function actualizarPuntosSemana(puntos) {
   document.getElementById('puntos-semana-fill').style.width = pct + '%';
 }
 actualizarPuntosSemana(PUNTOS_SEMANA);
+
+/* ---------- Puntos del mes: objetivo 400, acumulado a partir de los puntos semanales ---------- */
+const PUNTOS_MES = 0; // placeholder hasta que exista la lógica real de puntos
+const PUNTOS_META_MENSUAL = 400;
+
+function actualizarPuntosMes(puntos) {
+  const pct = Math.max(0, Math.min(100, Math.round((puntos / PUNTOS_META_MENSUAL) * 100)));
+  document.getElementById('puntos-mes-num').textContent = puntos;
+  document.getElementById('puntos-mes-fill').style.width = pct + '%';
+}
+actualizarPuntosMes(PUNTOS_MES);
+
+/* ---------- Dropdown "Elegí qué estudiar" ---------- */
+document.getElementById('estudiar-select').addEventListener('change', (e) => {
+  const view = e.target.value;
+  if (!view) return;
+  document.querySelector('.nav-item[data-view="' + view + '"]').click();
+  e.target.selectedIndex = 0;
+});
 
 /* ---------- Mi calendario de esta semana (datos reales del calendario de Google) ---------- */
 const CALENDARIO_WEBHOOK_URL = "https://dominioservicion8nfacundo.cloud/webhook/valeria-mi-calendario-semanal";
@@ -1908,6 +1948,7 @@ const COMUNIDAD_CATEGORIAS = [
   'Future Goals and Plans'
 ];
 
+const comunidadSelector = document.getElementById('comunidad-selector');
 const comunidadGrid = document.getElementById('comunidad-grid');
 const comunidadDetail = document.getElementById('comunidad-detail');
 const comunidadDetailTitle = document.getElementById('comunidad-detail-title');
@@ -1928,7 +1969,7 @@ comunidadEmailInput.addEventListener('change', () => {
 
 document.getElementById('comunidad-back').addEventListener('click', () => {
   comunidadDetail.hidden = true;
-  comunidadGrid.hidden = false;
+  comunidadSelector.hidden = false;
 });
 
 document.querySelector('.nav-item[data-view="comunidad"]').addEventListener('click', () => {
@@ -2024,7 +2065,7 @@ async function abrirTemaComunidad(temaId, nombre, opciones = {}) {
   comunidadPregunta.textContent = '';
   comunidadSesionesList.innerHTML = '<div class="sin-sesiones"><div class="spinner"></div></div>';
   comunidadResultado.hidden = true;
-  comunidadGrid.hidden = true;
+  comunidadSelector.hidden = true;
   comunidadDetail.hidden = false;
   if (opciones.foco) aplicarFocoComunidad(opciones.foco);
 
