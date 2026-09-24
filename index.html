@@ -690,6 +690,33 @@
     border-bottom: 1px solid var(--border);
     line-height: 1.7;
     font-size: 14.5px;
+    text-align: justify;
+    hyphens: auto;
+    -webkit-hyphens: auto;
+  }
+  .lectura-texto p { margin: 0 0 14px; }
+  .lectura-texto p:last-child { margin-bottom: 0; }
+  .lectura-comenzar {
+    display: block;
+    width: 100%;
+    margin-top: 22px;
+    padding: 14px 20px;
+    border: none;
+    border-radius: 12px;
+    background: var(--azul-oscuro);
+    color: #fff;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .lectura-comenzar:hover { background: var(--celeste-dark); }
+  .lectura-quiz[hidden] { display: none; }
+  .lectura-subtitulo {
+    margin: 20px 0 8px;
+    font-size: 15px;
+    text-align: left;
+    color: var(--azul-oscuro);
   }
   .lectura-titulo {
     color: var(--azul-oscuro);
@@ -1879,6 +1906,20 @@ async function buscarLectura(categoria) {
   }
 }
 
+function textoAParrafosHtml(texto) {
+  return String(texto || '')
+    .split(/\n{2,}/)
+    .map(p => p.trim())
+    .filter(Boolean)
+    .map(p => {
+      const esSubtitulo = p.split(/\s+/).length <= 12 && !/[.!:"”]$/.test(p);
+      return esSubtitulo
+        ? '<h3 class="lectura-subtitulo">' + escapeHtml(p) + '</h3>'
+        : '<p>' + escapeHtml(p) + '</p>';
+    })
+    .join('');
+}
+
 function renderLectura(data) {
   const preguntas = Array.isArray(data.preguntas) ? data.preguntas : [];
   const preguntasHtml = preguntas.map((p, idx) => {
@@ -1895,11 +1936,24 @@ function renderLectura(data) {
 
   setLecturaResultado(`
     <h2 class="lectura-titulo">${escapeHtml(data.titulo || '')}</h2>
-    <div class="lectura-texto">${escapeHtml(data.texto || '')}</div>
-    ${data.fuente ? `<p class="lectura-fuente">Texto real, tal cual publicado — Fuente: ${escapeHtml(data.fuente)}</p>` : ''}
-    <div class="preguntas-lectura">${preguntasHtml}</div>
-    <div class="lectura-quiz-resumen" id="lectura-quiz-resumen"></div>
+    <div class="lectura-texto" lang="en">${textoAParrafosHtml(data.texto)}</div>
+    ${data.fuente ? `<p class="lectura-fuente">Extracto de un texto real, sin modificar sus palabras — Fuente: ${escapeHtml(data.fuente)}</p>` : ''}
+    ${preguntas.length ? '<button type="button" class="lectura-comenzar" id="lectura-comenzar">Comenzar quiz</button>' : ''}
+    <div class="lectura-quiz" id="lectura-quiz" hidden>
+      <div class="preguntas-lectura">${preguntasHtml}</div>
+      <div class="lectura-quiz-resumen" id="lectura-quiz-resumen"></div>
+    </div>
   `, 'mapa');
+
+  const comenzarBtn = lecturaResultado.querySelector('#lectura-comenzar');
+  const quizEl = lecturaResultado.querySelector('#lectura-quiz');
+  if (comenzarBtn && quizEl) {
+    comenzarBtn.addEventListener('click', () => {
+      comenzarBtn.hidden = true;
+      quizEl.hidden = false;
+      quizEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
 
   const resumenEl = lecturaResultado.querySelector('#lectura-quiz-resumen');
   const estado = { respondidas: 0, correctas: 0 };
