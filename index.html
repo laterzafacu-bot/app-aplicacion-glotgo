@@ -28,21 +28,62 @@
     color: var(--texto);
   }
   .app-shell {
+    --sidebar-w: 232px;
+    position: relative;
     display: flex;
     height: 100vh;
     overflow: hidden;
   }
+  body.sidebar-collapsed .app-shell { --sidebar-w: 0px; }
 
   /* ---------- Sidebar ---------- */
   .sidebar {
-    width: 232px;
+    width: var(--sidebar-w);
     flex-shrink: 0;
     background: var(--blanco);
     border-right: 1px solid var(--border);
-    padding: 24px 16px;
+    padding: 24px 0;
+    overflow: hidden;
+    transition: width .28s ease;
+  }
+  body.sidebar-collapsed .sidebar { border-right-color: transparent; }
+  .sidebar-inner {
+    width: 232px;
+    padding: 0 16px;
     display: flex;
     flex-direction: column;
   }
+  .sidebar-toggle {
+    position: absolute;
+    top: 20px;
+    left: calc(var(--sidebar-w) - 20px);
+    z-index: 30;
+    height: 40px;
+    min-width: 40px;
+    padding: 0 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: 3px solid var(--blanco);
+    border-radius: 999px;
+    background: var(--celeste);
+    color: var(--blanco);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(14, 62, 130, 0.35);
+    transition: left .28s ease, background .15s ease, transform .15s ease;
+  }
+  .sidebar-toggle:hover { background: var(--azul-oscuro); transform: scale(1.06); }
+  .sidebar-toggle:focus-visible { outline: 3px solid var(--azul-oscuro); outline-offset: 2px; }
+  .sidebar-toggle svg { flex-shrink: 0; transition: transform .28s ease; }
+  .sidebar-toggle .sidebar-toggle-label { display: none; }
+  body.sidebar-collapsed .sidebar-toggle { left: 12px; padding: 0 14px 0 10px; }
+  body.sidebar-collapsed .sidebar-toggle svg { transform: rotate(180deg); }
+  body.sidebar-collapsed .sidebar-toggle .sidebar-toggle-label { display: inline; }
+  body.sidebar-collapsed main.content { padding-top: 76px; }
   .brand {
     display: flex;
     align-items: center;
@@ -765,6 +806,78 @@
   .opcion-lectura.correcta { background: #e6f6ea; border-color: #2f9e51; color: #1e6b37; }
   .opcion-lectura.incorrecta { background: #fdecec; border-color: #c0392b; color: #a12727; }
 
+  /* ---------- Lectura: tarjetas de categoría (3 por fila, foto al pasar el cursor) ---------- */
+  .lectura-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+  .lectura-card {
+    position: relative;
+    min-height: 190px;
+    padding: 22px 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    text-align: left;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--blanco);
+    font-family: inherit;
+    cursor: pointer;
+    overflow: hidden;
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .lectura-card:hover, .lectura-card:focus-visible {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 26px rgba(14, 62, 130, 0.28);
+  }
+  .lectura-card .icon {
+    width: 44px; height: 44px;
+    border-radius: 11px;
+    background: var(--celeste-bg);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    margin-bottom: 14px;
+  }
+  .lectura-card h3 { margin: 0; font-size: 16px; color: var(--azul-oscuro); }
+  .lectura-card-foto {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: flex-end;
+    padding: 18px 20px;
+    background-size: cover;
+    background-position: center;
+    opacity: 0;
+    transition: opacity .25s ease;
+  }
+  .lectura-card-foto::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(14, 62, 130, 0.88) 0%, rgba(14, 62, 130, 0.25) 55%, rgba(14, 62, 130, 0) 100%);
+  }
+  .lectura-card-foto span {
+    position: relative;
+    color: var(--blanco);
+    font-size: 17px;
+    font-weight: 700;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
+  }
+  .lectura-card:hover .lectura-card-foto,
+  .lectura-card:focus-visible .lectura-card-foto { opacity: 1; }
+  @media (hover: none) {
+    .lectura-card-foto { opacity: 1; }
+  }
+  @media (max-width: 900px) {
+    .lectura-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 560px) {
+    .lectura-grid { grid-template-columns: 1fr; }
+  }
+
   /* ---------- Comunidad view: temas y sesiones ---------- */
   .tema-grid {
     display: grid;
@@ -958,10 +1071,19 @@
   }
 </style>
 </head>
-<body>
+<body class="sidebar-collapsed">
+<script>
+  // Menú lateral cerrado por defecto; si el alumno lo dejó abierto, se restaura antes del primer render.
+  try { if (localStorage.getItem('sidebar_abierta') === '1') document.body.classList.remove('sidebar-collapsed'); } catch (e) {}
+</script>
 
 <div class="app-shell">
+  <button type="button" class="sidebar-toggle" id="sidebar-toggle" aria-label="Abrir menú" aria-expanded="false" title="Abrir menú">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    <span class="sidebar-toggle-label">Menú</span>
+  </button>
   <aside class="sidebar">
+   <div class="sidebar-inner">
     <div class="brand">
       <div class="logo">V</div>
       <div class="name">Valeria Inglés</div>
@@ -988,6 +1110,7 @@
         Conversaciones en comunidad
       </button>
     </nav>
+   </div>
   </aside>
 
   <main class="content">
@@ -1090,9 +1213,9 @@
 
       <div class="lectura-selector" id="lectura-selector">
         <h1 class="greeting">Lectura</h1>
-        <p class="greeting-sub">Elegí una categoría: vas a leer una noticia real de nivel intermedio, tal cual fue publicada (sin editar), y responder un quiz de comprensión. Cada quiz bien resuelto suma 25 puntos a tu semana.</p>
+        <p class="greeting-sub">Elegí una categoría: vas a leer una noticia real de nivel intermedio y responder un quiz de comprensión. Cada quiz bien resuelto suma 25 puntos a tu semana.</p>
 
-        <div class="tema-grid" id="lectura-tema-grid"></div>
+        <div class="lectura-grid" id="lectura-tema-grid"></div>
       </div>
 
       <div class="lectura-detail" id="lectura-detail" hidden>
@@ -1153,6 +1276,22 @@ function switchView(name) {
 navItems.forEach(btn => {
   btn.addEventListener('click', () => switchView(btn.dataset.view));
 });
+
+/* ---------- Menú lateral desplegable ---------- */
+const sidebarToggle = document.getElementById('sidebar-toggle');
+function actualizarSidebarToggle() {
+  const cerrado = document.body.classList.contains('sidebar-collapsed');
+  const texto = cerrado ? 'Abrir menú' : 'Cerrar menú';
+  sidebarToggle.setAttribute('aria-label', texto);
+  sidebarToggle.setAttribute('title', texto);
+  sidebarToggle.setAttribute('aria-expanded', String(!cerrado));
+}
+sidebarToggle.addEventListener('click', () => {
+  const cerrado = document.body.classList.toggle('sidebar-collapsed');
+  try { localStorage.setItem('sidebar_abierta', cerrado ? '0' : '1'); } catch (e) {}
+  actualizarSidebarToggle();
+});
+actualizarSidebarToggle();
 
 /* ---------- Mock data del Home (placeholder hasta tener datos reales de alumno) ---------- */
 const DIAS_SEMANA = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
@@ -1855,14 +1994,28 @@ document.getElementById('lectura-back').addEventListener('click', () => {
   lecturaSelector.hidden = false;
 });
 
+// Foto que aparece al pasar el cursor sobre cada categoría (Unsplash, licencia libre).
+const unsplash = id => 'https://images.unsplash.com/photo-' + id + '?auto=format&fit=crop&w=800&h=500&q=75';
+const LECTURA_FOTOS = {
+  'Business & Marketing': { icono: '💼', foto: unsplash('1454165804606-c3d57bc86b40') },
+  'Technology & AI': { icono: '💻', foto: unsplash('1677442136019-21780ecad995') },
+  'Entertainment & Pop Culture': { icono: '🎬', foto: unsplash('1514525253161-7a46d19cd819') },
+  'Travel & Lifestyle': { icono: '✈️', foto: unsplash('1488646953014-85cb44e25828') },
+  'Health & Wellness': { icono: '🥗', foto: unsplash('1490645935967-10de6ba17061') },
+  'Sports & Hobbies': { icono: '⚽', foto: unsplash('1461896836934-ffe607ba8211') }
+};
+
 function renderCategoriasLectura() {
   lecturaTemaGrid.innerHTML = '';
   LECTURA_CATEGORIAS.forEach(categoria => {
-    const card = document.createElement('div');
-    card.className = 'tema-card';
+    const info = LECTURA_FOTOS[categoria] || { icono: '📖', foto: '' };
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'lectura-card';
     card.innerHTML = `
-      <div class="icon">📖</div>
+      <div class="icon">${info.icono}</div>
       <h3>${escapeHtml(categoria)}</h3>
+      <div class="lectura-card-foto" style="background-image:url('${info.foto}')"><span>${escapeHtml(categoria)}</span></div>
     `;
     card.addEventListener('click', () => {
       lecturaSelector.hidden = true;
