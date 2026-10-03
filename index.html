@@ -586,25 +586,28 @@
     background: var(--blanco);
     border: 1px solid var(--border);
     border-radius: 10px;
-    padding: 16px 18px;
+    padding: 30px 28px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
-  .vocab-word-head { margin-bottom: 8px; }
-  .vocab-word-card strong { color: var(--azul-oscuro); font-size: 15px; }
-  .vocab-word-card .fonetica { color: var(--gris); font-size: 12px; }
+  .vocab-word-head { margin-bottom: 12px; }
+  .vocab-word-card strong { color: var(--azul-oscuro); font-size: 17px; }
+  .vocab-word-card .fonetica { color: var(--gris); font-size: 13px; }
   .vocab-word-card .definicion {
-    font-size: 13px;
-    line-height: 1.5;
-    margin-bottom: 8px;
-    padding-bottom: 8px;
+    font-size: 14.5px;
+    line-height: 1.6;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
     border-bottom: 1px dashed var(--border);
   }
   .vocab-word-card .ejemplo {
-    font-size: 13px;
+    font-size: 14.5px;
     font-style: italic;
-    line-height: 1.45;
-    margin-bottom: 8px;
+    line-height: 1.55;
+    margin-bottom: 16px;
   }
-  .vocab-word-card .traduccion { font-size: 12px; color: var(--gris); }
+  .vocab-word-card .traduccion { font-size: 13px; color: var(--gris); }
 
   /* ---------- Vocabulario: carrusel de flashcards ---------- */
   .vocab-carousel {
@@ -641,6 +644,7 @@
   .vocab-carousel-card {
     width: 100%;
     max-width: 380px;
+    min-height: 320px;
     box-shadow: 0 10px 24px rgba(14, 62, 130, 0.12);
   }
   .vocab-carousel-peek {
@@ -927,12 +931,6 @@
     background: var(--celeste-bg);
     border-left: 5px solid var(--celeste);
     border-radius: 10px;
-  }
-  .lectura-fuente {
-    margin: 0 0 22px;
-    font-size: 12px;
-    color: var(--gris);
-    font-style: italic;
   }
   .lectura-quiz-resumen {
     margin-top: 16px;
@@ -2409,7 +2407,6 @@ function renderLectura(data) {
   setLecturaResultado(`
     <h2 class="lectura-titulo">${escapeHtml(data.titulo || '')}</h2>
     <div class="lectura-texto" lang="en">${textoAParrafosHtml(data.texto)}</div>
-    ${data.fuente ? `<p class="lectura-fuente">Extracto de un texto real, sin modificar sus palabras — Fuente: ${escapeHtml(data.fuente)}</p>` : ''}
     ${preguntas.length ? '<button type="button" class="lectura-comenzar" id="lectura-comenzar">Comenzar quiz</button>' : ''}
     <div class="lectura-quiz" id="lectura-quiz" hidden>
       <div class="preguntas-lectura">${preguntasHtml}</div>
