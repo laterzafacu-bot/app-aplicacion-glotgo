@@ -1001,16 +1001,6 @@
     font-family: inherit;
   }
   .comunidad-detail { width: 100%; }
-  .pregunta-prompt {
-    background: var(--celeste-bg);
-    border-left: 4px solid var(--celeste);
-    border-radius: 10px;
-    padding: 16px 18px;
-    font-size: 14px;
-    font-style: italic;
-    color: var(--azul-oscuro);
-    margin: 6px 0 26px;
-  }
   .email-row {
     display: flex;
     gap: 10px;
@@ -1347,7 +1337,6 @@
         <div class="comunidad-detail-body" id="comunidad-detail-body">
           <button type="button" class="back-link" id="comunidad-back">&larr; Volver a temas</button>
           <h2 class="gramatica-detail-title" id="comunidad-detail-title"></h2>
-          <div class="pregunta-prompt" id="comunidad-pregunta"></div>
 
           <div class="email-row">
             <input type="email" id="comunidad-email" placeholder="Tu email (ahí te va a llegar la invitación de Calendar)">
@@ -2312,7 +2301,6 @@ const comunidadGrid = document.getElementById('comunidad-grid');
 const comunidadDetail = document.getElementById('comunidad-detail');
 const comunidadDetailBody = document.getElementById('comunidad-detail-body');
 const comunidadDetailTitle = document.getElementById('comunidad-detail-title');
-const comunidadPregunta = document.getElementById('comunidad-pregunta');
 const comunidadEmailInput = document.getElementById('comunidad-email');
 const comunidadSesionesList = document.getElementById('comunidad-sesiones-list');
 const comunidadHorarioInput = document.getElementById('comunidad-horario');
@@ -2470,7 +2458,6 @@ function aplicarFocoComunidad(foco) {
 async function abrirTemaComunidad(temaId, nombre, opciones = {}) {
   comunidadTemaActivo = { id: temaId, nombre };
   comunidadDetailTitle.textContent = nombre;
-  comunidadPregunta.textContent = '';
   comunidadSesionesList.innerHTML = '<div class="sin-sesiones"><div class="spinner"></div></div>';
   comunidadResultado.hidden = true;
   comunidadSelector.hidden = true;
@@ -2490,9 +2477,6 @@ async function abrirTemaComunidad(temaId, nombre, opciones = {}) {
     const data = await res.json();
 
     const preguntas = (data.tema && data.tema.preguntas) || [];
-    comunidadPregunta.innerHTML = preguntas.length
-      ? preguntas.map(p => '💡 ' + escapeHtml(p)).join('<br><br>')
-      : '';
     comunidadPreguntasActivas = preguntas;
     comunidadClaseBtn.disabled = !preguntas.length;
 
