@@ -83,6 +83,120 @@
   body.sidebar-collapsed .sidebar-toggle { left: 12px; padding: 0 14px 0 10px; }
   body.sidebar-collapsed .sidebar-toggle svg { transform: rotate(180deg); }
   body.sidebar-collapsed .sidebar-toggle .sidebar-toggle-label { display: inline; }
+
+  /* ---------- Círculo flotante de puntos por sección ---------- */
+  .puntos-badge-flotante {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 25;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--azul-oscuro);
+    color: var(--blanco);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.1;
+    box-shadow: 0 4px 14px rgba(14, 62, 130, 0.35);
+    pointer-events: none;
+  }
+  .puntos-badge-flotante .num { font-size: 16px; font-weight: 800; }
+  .puntos-badge-flotante .label { font-size: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
+  @media (max-width: 560px) {
+    .puntos-badge-flotante { width: 52px; height: 52px; bottom: 16px; right: 16px; }
+    .puntos-badge-flotante .num { font-size: 13px; }
+    .puntos-badge-flotante .label { font-size: 7px; }
+  }
+
+  /* ---------- Buzón de feedback flotante (solo en Home) ---------- */
+  .feedback-flotante {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 25;
+  }
+  .feedback-burbuja {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 3px solid var(--blanco);
+    border-radius: 999px;
+    background: var(--celeste);
+    color: var(--blanco);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 12px 18px;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(14, 62, 130, 0.35);
+    transition: background .15s ease, transform .15s ease;
+    max-width: 220px;
+    text-align: left;
+  }
+  .feedback-burbuja:hover { background: var(--azul-oscuro); transform: scale(1.03); }
+  .feedback-emoji { font-size: 18px; flex-shrink: 0; }
+  .feedback-panel {
+    width: 280px;
+    background: var(--blanco);
+    border-radius: 16px;
+    padding: 18px 18px 16px;
+    box-shadow: 0 10px 30px rgba(14, 62, 130, 0.3);
+    position: relative;
+  }
+  .feedback-cerrar {
+    position: absolute;
+    top: 10px; right: 10px;
+    background: none;
+    border: none;
+    font-size: 18px;
+    line-height: 1;
+    color: var(--gris);
+    cursor: pointer;
+    padding: 4px;
+  }
+  .feedback-cerrar:hover { color: var(--texto); }
+  .feedback-pregunta {
+    font-size: 13px;
+    color: var(--texto);
+    margin: 0 20px 12px 0;
+    line-height: 1.4;
+  }
+  .feedback-panel textarea {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-family: inherit;
+    font-size: 13px;
+    resize: vertical;
+    margin-bottom: 10px;
+  }
+  .feedback-enviar-btn {
+    background: var(--azul-oscuro);
+    color: var(--blanco);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .feedback-enviar-btn:hover { opacity: .9; }
+  .feedback-confirmacion {
+    margin-top: 10px;
+    font-size: 12.5px;
+    color: #1e6b37;
+    font-weight: 600;
+  }
+  .feedback-confirmacion.aviso { color: var(--gris); }
+  @media (max-width: 560px) {
+    .feedback-flotante { bottom: 16px; right: 16px; }
+    .feedback-panel { width: calc(100vw - 48px); max-width: 280px; }
+  }
   body.sidebar-collapsed main.content { padding-top: 76px; }
   .brand {
     display: flex;
@@ -139,6 +253,8 @@
     font-weight: 600;
   }
   .nav-item.active svg { stroke: var(--celeste-dark); }
+  .nav-item:disabled { opacity: .5; cursor: not-allowed; }
+  .nav-item:disabled:hover { background: none; color: var(--gris); }
 
   /* ---------- Main ---------- */
   main.content {
@@ -381,6 +497,7 @@
   .vocab-photo {
     position: relative;
     aspect-ratio: 4 / 3;
+    background: linear-gradient(135deg, var(--celeste) 0%, var(--azul-oscuro) 100%);
     background-size: cover;
     background-position: center;
     overflow: hidden;
@@ -390,9 +507,14 @@
     height: 100%;
     object-fit: cover;
     display: block;
-    transition: transform .3s ease;
+    opacity: 0;
+    transition: opacity .25s ease, transform .3s ease;
   }
-  .vocab-card:hover .vocab-photo img { transform: scale(1.05); }
+  .vocab-card:hover .vocab-photo img,
+  .vocab-card:focus-visible .vocab-photo img { opacity: 1; transform: scale(1.05); }
+  @media (hover: none) {
+    .vocab-photo img { opacity: 1; }
+  }
   .vocab-photo::after {
     content: "";
     position: absolute;
@@ -1193,9 +1315,9 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg>
         Home
       </button>
-      <button class="nav-item" data-view="gramatica">
+      <button class="nav-item" data-view="gramatica" disabled>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-        Gramática
+        Gramática 🚧
       </button>
       <button class="nav-item" data-view="vocabulario">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
@@ -1257,7 +1379,7 @@
           </div>
           <select class="cta-select" id="estudiar-select">
             <option value="" disabled selected>Elegí qué estudiar</option>
-            <option value="gramatica">Gramática</option>
+            <option value="gramatica" disabled>Gramática 🚧</option>
             <option value="vocabulario">Vocabulario</option>
             <option value="lectura">Lectura</option>
             <option value="comunidad">Conversaciones en comunidad</option>
@@ -1268,6 +1390,20 @@
       <div class="card">
         <h3>Mi calendario de esta semana</h3>
         <div class="calendario-semana" id="calendario-semana"></div>
+      </div>
+
+      <div class="feedback-flotante" id="feedback-flotante">
+        <button type="button" class="feedback-burbuja" id="feedback-abrir-btn">
+          <span class="feedback-emoji">🙋</span>
+          <span class="feedback-burbuja-texto">¿Sumamos 25 puntos? Menos de 1 min</span>
+        </button>
+        <div class="feedback-panel" id="feedback-panel" hidden>
+          <button type="button" class="feedback-cerrar" id="feedback-cerrar-btn" aria-label="Cerrar">&times;</button>
+          <p class="feedback-pregunta">¿Querés sumar 25 puntos? Contame en menos de 1 minuto qué mejorarías de la app, o qué no te convence.</p>
+          <textarea id="feedback-texto" placeholder="Escribí acá..." rows="4"></textarea>
+          <button type="button" class="feedback-enviar-btn" id="feedback-enviar-btn">Enviar</button>
+          <div class="feedback-confirmacion" id="feedback-confirmacion" hidden></div>
+        </div>
       </div>
     </section>
 
@@ -1297,6 +1433,7 @@
 
     <!-- ---------------- VOCABULARIO ---------------- -->
     <section class="view" id="view-vocabulario">
+      <div class="puntos-badge-flotante"><span class="num">+25</span><span class="label">puntos</span></div>
       <h1 class="greeting">Vocabulario</h1>
       <p class="greeting-sub">Adquirí vocabulario nuevo en el tema que más te esté faltando, y afianzalo con un breve quiz al final.</p>
 
@@ -1310,6 +1447,7 @@
 
     <!-- ---------------- LECTURA ---------------- -->
     <section class="view" id="view-lectura">
+      <div class="puntos-badge-flotante"><span class="num">+25</span><span class="label">puntos</span></div>
 
       <div class="lectura-selector" id="lectura-selector">
         <h1 class="greeting">Lectura</h1>
@@ -1326,6 +1464,7 @@
 
     <!-- ---------------- COMUNIDAD ---------------- -->
     <section class="view" id="view-comunidad">
+      <div class="puntos-badge-flotante"><span class="num">+50</span><span class="label">puntos</span></div>
       <div class="comunidad-selector" id="comunidad-selector">
         <h1 class="greeting">Conversaciones en comunidad</h1>
         <p class="greeting-sub">Practicá inglés hablado con otro alumno. Elegí un tema, sumate a un horario que ya propusieron o proponé el tuyo — la invitación de Calendar con el link de Meet les llega sola a los dos, sin que nadie más tenga que hacer nada.</p>
@@ -1371,6 +1510,7 @@
           <button type="button" id="comunidad-clase-siguiente">Siguiente pregunta &rarr;</button>
           <div class="clase-fin" id="comunidad-clase-fin" hidden>
             <p>¡Listo! Esas fueron todas las preguntas del tema.</p>
+            <p id="comunidad-clase-puntos-msg"></p>
             <button type="button" id="comunidad-clase-terminar">Volver al tema</button>
           </div>
         </div>
@@ -1442,15 +1582,17 @@ function registroPuntosSemana() {
 }
 
 function calcularPuntosSemana() {
-  return Object.keys(registroPuntosSemana()).length * PUNTOS_POR_ACTIVIDAD;
+  const registro = registroPuntosSemana();
+  return Object.values(registro).reduce((suma, p) => suma + (typeof p === 'number' ? p : PUNTOS_POR_ACTIVIDAD), 0);
 }
 
 // Suma los puntos de una actividad una sola vez por semana (actividadId identifica
 // la actividad puntual, ej. "lectura:Technology & AI"). Repetirla la misma semana no vuelve a sumar.
-function otorgarPuntosActividad(actividadId) {
+// "puntos" permite que una actividad valga distinto de las demás (ej. Comunidad = 50).
+function otorgarPuntosActividad(actividadId, puntos = PUNTOS_POR_ACTIVIDAD) {
   const registro = registroPuntosSemana();
   if (registro[actividadId]) return false;
-  registro[actividadId] = true;
+  registro[actividadId] = puntos;
   try {
     localStorage.setItem('puntos_semana_' + claveSemanaActual(), JSON.stringify(registro));
   } catch (e) {}
@@ -1483,6 +1625,43 @@ function actualizarPuntosMes(puntos) {
   document.getElementById('puntos-mes-fill').style.width = pct + '%';
 }
 actualizarPuntosMes(PUNTOS_MES);
+
+/* ---------- Buzón de feedback flotante (Home) ---------- */
+const feedbackAbrirBtn = document.getElementById('feedback-abrir-btn');
+const feedbackCerrarBtn = document.getElementById('feedback-cerrar-btn');
+const feedbackPanel = document.getElementById('feedback-panel');
+const feedbackTexto = document.getElementById('feedback-texto');
+const feedbackEnviarBtn = document.getElementById('feedback-enviar-btn');
+const feedbackConfirmacion = document.getElementById('feedback-confirmacion');
+
+feedbackAbrirBtn.addEventListener('click', () => {
+  feedbackAbrirBtn.hidden = true;
+  feedbackPanel.hidden = false;
+  feedbackConfirmacion.hidden = true;
+  feedbackTexto.focus();
+});
+
+feedbackCerrarBtn.addEventListener('click', () => {
+  feedbackPanel.hidden = true;
+  feedbackAbrirBtn.hidden = false;
+});
+
+feedbackEnviarBtn.addEventListener('click', () => {
+  if (!feedbackTexto.value.trim()) {
+    feedbackConfirmacion.hidden = false;
+    feedbackConfirmacion.className = 'feedback-confirmacion aviso';
+    feedbackConfirmacion.textContent = 'Escribí algo antes de enviar.';
+    return;
+  }
+  // No se envía a ningún lado todavía — placeholder a propósito.
+  const sumo = otorgarPuntosActividad('feedback-semanal');
+  feedbackConfirmacion.hidden = false;
+  feedbackConfirmacion.className = 'feedback-confirmacion';
+  feedbackConfirmacion.textContent = sumo
+    ? `¡Gracias! Sumaste ${PUNTOS_POR_ACTIVIDAD} puntos a tu semana.`
+    : '¡Gracias por el comentario! Esta semana ya habías sumado estos puntos.';
+  feedbackTexto.value = '';
+});
 
 /* ---------- Dropdown "Elegí qué estudiar" ---------- */
 document.getElementById('estudiar-select').addEventListener('change', (e) => {
@@ -1570,6 +1749,7 @@ const vocabGrid = document.getElementById('vocab-grid');
 VOCAB_CATEGORIAS.forEach(cat => {
   const card = document.createElement('div');
   card.className = 'vocab-card';
+  card.tabIndex = 0;
   card.innerHTML = `
     <div class="vocab-photo">
       <img src="${pexelsUrl(cat.photo)}" alt="${escapeHtml(cat.title)}" loading="lazy">
@@ -1594,12 +1774,14 @@ let vocabPalabras = [];
 let vocabCarouselIndex = 0;
 let vocabQuizItems = [];
 let vocabQuizRevisado = false;
+let vocabCategoriaActiva = null;
 
 function resetVocabState() {
   vocabPalabras = [];
   vocabCarouselIndex = 0;
   vocabQuizItems = [];
   vocabQuizRevisado = false;
+  vocabCategoriaActiva = null;
 }
 
 document.getElementById('vocab-back').addEventListener('click', () => {
@@ -1611,6 +1793,7 @@ document.getElementById('vocab-back').addEventListener('click', () => {
 async function buscarVocabulario(categoria) {
   vocabGrid.hidden = true;
   vocabDetail.hidden = false;
+  vocabCategoriaActiva = categoria;
   vocabDetailTitle.textContent = categoria;
   vocabDetailResultado.className = 'resultado vacio loading';
   vocabDetailResultado.innerHTML = '<div class="spinner"></div>';
@@ -1799,9 +1982,15 @@ function revisarQuizVocabulario() {
     }
   });
 
+  const sumo = otorgarPuntosActividad('vocabulario:' + vocabCategoriaActiva);
+  const mensajePuntos = sumo
+    ? ` — sumaste ${PUNTOS_POR_ACTIVIDAD} puntos a tu semana.`
+    : ' — esta categoría ya te sumó puntos esta semana.';
+
   document.getElementById('vocab-quiz-resumen').innerHTML =
     `<span class="correcta">${correctas} correctas</span> · <span class="incorrecta">${incorrectas} incorrectas</span>` +
-    (sinResponder ? ` <span class="vocab-quiz-sin-responder">(${sinResponder} sin responder)</span>` : '');
+    (sinResponder ? ` <span class="vocab-quiz-sin-responder">(${sinResponder} sin responder)</span>` : '') +
+    mensajePuntos;
 
   vocabQuizRevisado = true;
   document.getElementById('vocab-quiz-check-btn').disabled = true;
@@ -2349,6 +2538,10 @@ comunidadClaseSiguiente.addEventListener('click', () => {
     comunidadClasePregunta.hidden = true;
     comunidadClaseSiguiente.hidden = true;
     comunidadClaseFin.hidden = false;
+    const sumo = otorgarPuntosActividad('comunidad:' + comunidadTemaActivo.id, 50);
+    document.getElementById('comunidad-clase-puntos-msg').textContent = sumo
+      ? '¡Sumaste 50 puntos a tu semana!'
+      : 'Esta conversación ya te sumó puntos esta semana.';
   } else {
     renderPreguntaClaseComunidad();
   }
