@@ -1900,9 +1900,16 @@ function construirRegexPalabra(texto) {
   return new RegExp('\\b' + escaped + '\\b', 'i');
 }
 
+const VOCAB_QUIZ_MAX_PALABRAS = 10;
+
 function construirOracionesQuiz(palabras) {
+  const barajadas = [...palabras];
+  for (let i = barajadas.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [barajadas[i], barajadas[j]] = [barajadas[j], barajadas[i]];
+  }
   const items = [];
-  palabras.forEach(p => {
+  barajadas.slice(0, VOCAB_QUIZ_MAX_PALABRAS).forEach(p => {
     const ejemplo = (p.ejemplo || '').trim();
     const palabraTexto = (p.palabra || '').trim();
     if (!ejemplo || !palabraTexto) return;
