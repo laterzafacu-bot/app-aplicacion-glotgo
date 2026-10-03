@@ -1098,6 +1098,84 @@
   }
   .sin-sesiones { font-size: 13px; color: var(--gris); font-style: italic; margin-bottom: 10px; }
 
+  .clase-cta {
+    margin-top: 28px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+  }
+  .clase-cta #comunidad-clase-btn {
+    background: var(--azul-oscuro);
+    color: var(--blanco);
+    border: none;
+    border-radius: 10px;
+    padding: 14px 28px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .clase-cta #comunidad-clase-btn:hover { opacity: .9; }
+  .clase-cta #comunidad-clase-btn:disabled { opacity: .5; cursor: not-allowed; }
+  .clase-cta-sub { margin: 10px 0 0; font-size: 12px; color: var(--gris); }
+
+  .comunidad-clase {
+    max-width: 640px;
+    margin: 0 auto;
+    text-align: center;
+    padding: 40px 0;
+  }
+  .clase-salir {
+    background: none;
+    border: none;
+    color: var(--gris);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    margin-bottom: 30px;
+  }
+  .clase-salir:hover { color: var(--texto); }
+  .clase-progreso {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    color: var(--celeste-dark);
+    text-transform: uppercase;
+    margin-bottom: 18px;
+  }
+  .clase-pregunta {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--azul-oscuro);
+    line-height: 1.35;
+    margin-bottom: 36px;
+  }
+  #comunidad-clase-siguiente {
+    background: var(--celeste);
+    color: var(--blanco);
+    border: none;
+    border-radius: 10px;
+    padding: 14px 30px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  #comunidad-clase-siguiente:hover { background: var(--celeste-dark); }
+  .clase-fin p { font-size: 15px; color: var(--texto); margin-bottom: 18px; }
+  .clase-fin button {
+    background: var(--azul-oscuro);
+    color: var(--blanco);
+    border: none;
+    border-radius: 10px;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
   @media (max-width: 860px) {
     .cards-row { grid-template-columns: 1fr; }
   }
@@ -1266,29 +1344,47 @@
       </div>
 
       <div class="comunidad-detail" id="comunidad-detail" hidden>
-        <button type="button" class="back-link" id="comunidad-back">&larr; Volver a temas</button>
-        <h2 class="gramatica-detail-title" id="comunidad-detail-title"></h2>
-        <div class="pregunta-prompt" id="comunidad-pregunta"></div>
+        <div class="comunidad-detail-body" id="comunidad-detail-body">
+          <button type="button" class="back-link" id="comunidad-back">&larr; Volver a temas</button>
+          <h2 class="gramatica-detail-title" id="comunidad-detail-title"></h2>
+          <div class="pregunta-prompt" id="comunidad-pregunta"></div>
 
-        <div class="email-row">
-          <input type="email" id="comunidad-email" placeholder="Tu email (ahí te va a llegar la invitación de Calendar)">
-          <span class="email-status">Se guarda en este dispositivo para no pedírtelo de nuevo.</span>
-        </div>
+          <div class="email-row">
+            <input type="email" id="comunidad-email" placeholder="Tu email (ahí te va a llegar la invitación de Calendar)">
+            <span class="email-status">Se guarda en este dispositivo para no pedírtelo de nuevo.</span>
+          </div>
 
-        <div class="sesiones-section">
-          <h3>Horarios propuestos por otros alumnos</h3>
-          <div id="comunidad-sesiones-list"></div>
-        </div>
+          <div class="sesiones-section">
+            <h3>Horarios propuestos por otros alumnos</h3>
+            <div id="comunidad-sesiones-list"></div>
+          </div>
 
-        <div class="proponer-section">
-          <h3>¿Ninguno te sirve? Proponé el tuyo</h3>
-          <div class="proponer-row">
-            <input type="datetime-local" id="comunidad-horario">
-            <button type="button" id="comunidad-proponer-btn">Proponer este horario</button>
+          <div class="proponer-section">
+            <h3>¿Ninguno te sirve? Proponé el tuyo</h3>
+            <div class="proponer-row">
+              <input type="datetime-local" id="comunidad-horario">
+              <button type="button" id="comunidad-proponer-btn">Proponer este horario</button>
+            </div>
+          </div>
+
+          <div class="confirmacion-box" id="comunidad-resultado" hidden></div>
+
+          <div class="clase-cta">
+            <button type="button" id="comunidad-clase-btn">Comenzó la clase</button>
+            <p class="clase-cta-sub">Cuando los dos estén conectados por Meet, apretá esto y van a ir viendo una pregunta a la vez.</p>
           </div>
         </div>
 
-        <div class="confirmacion-box" id="comunidad-resultado" hidden></div>
+        <div class="comunidad-clase" id="comunidad-clase" hidden>
+          <button type="button" class="clase-salir" id="comunidad-clase-salir">Salir de la clase</button>
+          <div class="clase-progreso" id="comunidad-clase-progreso"></div>
+          <div class="clase-pregunta" id="comunidad-clase-pregunta"></div>
+          <button type="button" id="comunidad-clase-siguiente">Siguiente pregunta &rarr;</button>
+          <div class="clase-fin" id="comunidad-clase-fin" hidden>
+            <p>¡Listo! Esas fueron todas las preguntas del tema.</p>
+            <button type="button" id="comunidad-clase-terminar">Volver al tema</button>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -2214,6 +2310,7 @@ const COMUNIDAD_CATEGORIAS = [
 const comunidadSelector = document.getElementById('comunidad-selector');
 const comunidadGrid = document.getElementById('comunidad-grid');
 const comunidadDetail = document.getElementById('comunidad-detail');
+const comunidadDetailBody = document.getElementById('comunidad-detail-body');
 const comunidadDetailTitle = document.getElementById('comunidad-detail-title');
 const comunidadPregunta = document.getElementById('comunidad-pregunta');
 const comunidadEmailInput = document.getElementById('comunidad-email');
@@ -2221,9 +2318,56 @@ const comunidadSesionesList = document.getElementById('comunidad-sesiones-list')
 const comunidadHorarioInput = document.getElementById('comunidad-horario');
 const comunidadProponerBtn = document.getElementById('comunidad-proponer-btn');
 const comunidadResultado = document.getElementById('comunidad-resultado');
+const comunidadClaseBtn = document.getElementById('comunidad-clase-btn');
+const comunidadClaseSection = document.getElementById('comunidad-clase');
+const comunidadClaseSalir = document.getElementById('comunidad-clase-salir');
+const comunidadClaseProgreso = document.getElementById('comunidad-clase-progreso');
+const comunidadClasePregunta = document.getElementById('comunidad-clase-pregunta');
+const comunidadClaseSiguiente = document.getElementById('comunidad-clase-siguiente');
+const comunidadClaseFin = document.getElementById('comunidad-clase-fin');
+const comunidadClaseTerminar = document.getElementById('comunidad-clase-terminar');
 
 let comunidadTemaActivo = null;
 let comunidadCargada = false;
+let comunidadPreguntasActivas = [];
+let comunidadClaseIndex = 0;
+
+function salirDeClaseComunidad() {
+  comunidadClaseSection.hidden = true;
+  comunidadDetailBody.hidden = false;
+}
+
+function renderPreguntaClaseComunidad() {
+  comunidadClaseProgreso.textContent = 'Pregunta ' + (comunidadClaseIndex + 1) + ' de ' + comunidadPreguntasActivas.length;
+  comunidadClasePregunta.textContent = comunidadPreguntasActivas[comunidadClaseIndex];
+  comunidadClaseProgreso.hidden = false;
+  comunidadClasePregunta.hidden = false;
+  comunidadClaseSiguiente.hidden = false;
+  comunidadClaseFin.hidden = true;
+}
+
+comunidadClaseBtn.addEventListener('click', () => {
+  if (!comunidadPreguntasActivas.length) return;
+  comunidadClaseIndex = 0;
+  renderPreguntaClaseComunidad();
+  comunidadDetailBody.hidden = true;
+  comunidadClaseSection.hidden = false;
+});
+
+comunidadClaseSiguiente.addEventListener('click', () => {
+  comunidadClaseIndex++;
+  if (comunidadClaseIndex >= comunidadPreguntasActivas.length) {
+    comunidadClaseProgreso.hidden = true;
+    comunidadClasePregunta.hidden = true;
+    comunidadClaseSiguiente.hidden = true;
+    comunidadClaseFin.hidden = false;
+  } else {
+    renderPreguntaClaseComunidad();
+  }
+});
+
+comunidadClaseSalir.addEventListener('click', salirDeClaseComunidad);
+comunidadClaseTerminar.addEventListener('click', salirDeClaseComunidad);
 
 comunidadEmailInput.value = localStorage.getItem('alumno_email') || '';
 comunidadEmailInput.addEventListener('change', () => {
@@ -2233,6 +2377,7 @@ comunidadEmailInput.addEventListener('change', () => {
 document.getElementById('comunidad-back').addEventListener('click', () => {
   comunidadDetail.hidden = true;
   comunidadSelector.hidden = false;
+  salirDeClaseComunidad();
 });
 
 document.querySelector('.nav-item[data-view="comunidad"]').addEventListener('click', () => {
@@ -2330,6 +2475,9 @@ async function abrirTemaComunidad(temaId, nombre, opciones = {}) {
   comunidadResultado.hidden = true;
   comunidadSelector.hidden = true;
   comunidadDetail.hidden = false;
+  comunidadPreguntasActivas = [];
+  comunidadClaseBtn.disabled = true;
+  salirDeClaseComunidad();
   if (opciones.foco) aplicarFocoComunidad(opciones.foco);
 
   try {
@@ -2345,6 +2493,8 @@ async function abrirTemaComunidad(temaId, nombre, opciones = {}) {
     comunidadPregunta.innerHTML = preguntas.length
       ? preguntas.map(p => '💡 ' + escapeHtml(p)).join('<br><br>')
       : '';
+    comunidadPreguntasActivas = preguntas;
+    comunidadClaseBtn.disabled = !preguntas.length;
 
     renderSesionesAbiertas(data.sesiones_abiertas || []);
   } catch (err) {
