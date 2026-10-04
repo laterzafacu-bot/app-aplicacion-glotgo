@@ -1575,7 +1575,7 @@
 <script>
 /* ---------- Autenticación (Supabase Auth) ---------- */
 const SUPABASE_URL = 'https://hgruqdscmhgvfgcffziz.supabase.co';
-const SUPABASE_ANON_KEY = 'PENDIENTE_COMPLETAR_ANON_KEY';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhncnVxZHNjbWhndmZnY2Zmeml6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3NzAwNjEsImV4cCI6MjA5ODM0NjA2MX0.yy3PEMZoF4omF98BbDBHKYJWR6Qp1k4PqDpMk5hIrnI';
 
 function getSesion() {
   try { return JSON.parse(localStorage.getItem('sb_session') || 'null'); } catch (e) { return null; }
