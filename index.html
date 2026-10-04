@@ -504,6 +504,22 @@
     transform: translateY(-3px);
     box-shadow: 0 10px 24px rgba(14, 62, 130, 0.12);
   }
+  .vocab-card-bloqueada, .lectura-card-bloqueada {
+    opacity: .55;
+  }
+  .vocab-card-bloqueada .vocab-bar, .lectura-card-bloqueada .lectura-card-bloqueo-msg {
+    background: #8a98a8;
+  }
+  .lectura-card-bloqueo-msg {
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+    background: #8a98a8;
+    border-radius: 6px;
+    padding: 4px 8px;
+    margin-top: 6px;
+    display: inline-block;
+  }
   .vocab-photo {
     position: relative;
     aspect-ratio: 4 / 3;
@@ -1307,7 +1323,36 @@
   try { if (localStorage.getItem('sidebar_abierta') === '1') document.body.classList.remove('sidebar-collapsed'); } catch (e) {}
 </script>
 
-<div class="app-shell">
+<style>
+  #login-gate { position: fixed; inset: 0; z-index: 1000; background: #0e3e82; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  #login-gate.hidden { display: none; }
+  #login-gate .login-card { background: #fff; border-radius: 16px; padding: 36px 32px; width: 100%; max-width: 360px; box-shadow: 0 20px 50px rgba(0,0,0,.25); }
+  #login-gate h1 { margin: 0 0 6px; font-size: 22px; color: #0e3e82; }
+  #login-gate p.sub { margin: 0 0 22px; color: #5C7A9E; font-size: 14px; }
+  #login-gate label { display: block; font-size: 13px; color: #0e3e82; font-weight: 600; margin-bottom: 6px; }
+  #login-gate input { width: 100%; box-sizing: border-box; padding: 11px 12px; border: 1px solid #cbd8e8; border-radius: 8px; font-size: 15px; margin-bottom: 16px; }
+  #login-gate button { width: 100%; padding: 12px; border: none; border-radius: 8px; background: #2862b4; color: #fff; font-weight: 600; font-size: 15px; cursor: pointer; }
+  #login-gate button:disabled { opacity: .6; cursor: default; }
+  #login-gate .login-error { color: #c0392b; font-size: 13px; margin: -6px 0 14px; min-height: 16px; }
+  #app-shell.hidden { display: none; }
+</style>
+
+<div id="login-gate">
+  <div class="login-card">
+    <h1>Valeria Inglés</h1>
+    <p class="sub">Entrá con tu cuenta para ver tu progreso.</p>
+    <form id="login-form">
+      <label for="login-email">Email</label>
+      <input type="email" id="login-email" autocomplete="username" required>
+      <label for="login-password">Contraseña</label>
+      <input type="password" id="login-password" autocomplete="current-password" required>
+      <div class="login-error" id="login-error"></div>
+      <button type="submit" id="login-submit">Entrar</button>
+    </form>
+  </div>
+</div>
+
+<div class="app-shell" id="app-shell">
   <button type="button" class="sidebar-toggle" id="sidebar-toggle" aria-label="Abrir menú" aria-expanded="false" title="Abrir menú">
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
     <span class="sidebar-toggle-label">Menú</span>
@@ -1317,6 +1362,7 @@
     <div class="brand">
       <div class="logo">V</div>
       <div class="name">Valeria Inglés</div>
+      <button type="button" id="logout-btn" title="Cerrar sesión" style="margin-left:auto;background:none;border:none;cursor:pointer;color:#5C7A9E;font-size:12px;">Salir</button>
     </div>
     <nav class="nav-list">
       <button class="nav-item active" data-view="home">
@@ -1488,11 +1534,6 @@
           <button type="button" class="back-link" id="comunidad-back">&larr; Volver a temas</button>
           <h2 class="gramatica-detail-title" id="comunidad-detail-title"></h2>
 
-          <div class="email-row">
-            <input type="email" id="comunidad-email" placeholder="Tu email (ahí te va a llegar la invitación de Calendar)">
-            <span class="email-status">Se guarda en este dispositivo para no pedírtelo de nuevo.</span>
-          </div>
-
           <div class="sesiones-section">
             <h3>Horarios propuestos por otros alumnos</h3>
             <div id="comunidad-sesiones-list"></div>
@@ -1532,6 +1573,86 @@
 </div>
 
 <script>
+/* ---------- Autenticación (Supabase Auth) ---------- */
+const SUPABASE_URL = 'https://hgruqdscmhgvfgcffziz.supabase.co';
+const SUPABASE_ANON_KEY = 'PENDIENTE_COMPLETAR_ANON_KEY';
+
+function getSesion() {
+  try { return JSON.parse(localStorage.getItem('sb_session') || 'null'); } catch (e) { return null; }
+}
+function guardarSesion(data) {
+  try {
+    localStorage.setItem('sb_session', JSON.stringify({
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+      alumno_id: data.user && data.user.id,
+      email: data.user && data.user.email
+    }));
+  } catch (e) {}
+}
+function cerrarSesion() {
+  try { localStorage.removeItem('sb_session'); } catch (e) {}
+  progresoSemanaCache = null;
+  mostrarLogin();
+}
+function alumnoId() {
+  const s = getSesion();
+  return s ? s.alumno_id : null;
+}
+function tokenAcceso() {
+  const s = getSesion();
+  return s ? s.access_token : null;
+}
+
+function mostrarApp() {
+  document.getElementById('login-gate').classList.add('hidden');
+  document.getElementById('app-shell').classList.remove('hidden');
+  cargarProgresoSemana();
+}
+function mostrarLogin() {
+  document.getElementById('app-shell').classList.add('hidden');
+  document.getElementById('login-gate').classList.remove('hidden');
+}
+
+async function intentarLogin(email, password) {
+  const res = await fetch(SUPABASE_URL + '/auth/v1/token?grant_type=password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY },
+    body: JSON.stringify({ email, password })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error_description || data.msg || 'No se pudo iniciar sesión');
+  guardarSesion(data);
+}
+
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const submitBtn = document.getElementById('login-submit');
+  const errorEl = document.getElementById('login-error');
+  errorEl.textContent = '';
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Entrando...';
+  try {
+    await intentarLogin(email, password);
+    mostrarApp();
+  } catch (err) {
+    errorEl.textContent = err.message;
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Entrar';
+  }
+});
+
+document.getElementById('logout-btn').addEventListener('click', cerrarSesion);
+
+if (getSesion()) {
+  mostrarApp();
+} else {
+  mostrarLogin();
+}
+
 /* ---------- Navegación entre vistas ---------- */
 const navItems = document.querySelectorAll('.nav-item');
 const views = document.querySelectorAll('.view');
@@ -1584,31 +1705,50 @@ function claveSemanaActual() {
   return lunes.toISOString().slice(0, 10);
 }
 
-function registroPuntosSemana() {
+const PROGRESO_WEBHOOK_URL = "https://dominioservicion8nfacundo.cloud/webhook/valeria-progreso-semanal";
+let progresoSemanaCache = null; // { tipos: {'vocabulario:Work and employment': 25, ...}, puntos_semana_total: 25 }
+
+async function cargarProgresoSemana() {
   try {
-    return JSON.parse(localStorage.getItem('puntos_semana_' + claveSemanaActual()) || '{}');
+    const res = await fetch(PROGRESO_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accion: 'listar', access_token: tokenAcceso() })
+    });
+    const data = await res.json();
+    progresoSemanaCache = data;
+    actualizarPuntosSemana(data.puntos_semana_total || 0);
+    aplicarBloqueosVocabulario();
+    aplicarBloqueosLectura();
   } catch (e) {
-    return {};
+    progresoSemanaCache = progresoSemanaCache || { tipos: {}, puntos_semana_total: 0 };
   }
+  return progresoSemanaCache;
 }
 
-function calcularPuntosSemana() {
-  const registro = registroPuntosSemana();
-  return Object.values(registro).reduce((suma, p) => suma + (typeof p === 'number' ? p : PUNTOS_POR_ACTIVIDAD), 0);
+function estaBloqueadaEstaSemana(tipo, tema) {
+  if (!progresoSemanaCache) return false;
+  return Boolean(progresoSemanaCache.tipos && progresoSemanaCache.tipos[tipo + ':' + tema] !== undefined);
 }
 
-// Suma los puntos de una actividad una sola vez por semana (actividadId identifica
-// la actividad puntual, ej. "lectura:Technology & AI"). Repetirla la misma semana no vuelve a sumar.
-// "puntos" permite que una actividad valga distinto de las demás (ej. Comunidad = 50).
-function otorgarPuntosActividad(actividadId, puntos = PUNTOS_POR_ACTIVIDAD) {
-  const registro = registroPuntosSemana();
-  if (registro[actividadId]) return false;
-  registro[actividadId] = puntos;
-  try {
-    localStorage.setItem('puntos_semana_' + claveSemanaActual(), JSON.stringify(registro));
-  } catch (e) {}
-  actualizarPuntosSemana(calcularPuntosSemana());
-  return true;
+// Otorga los puntos de una actividad una sola vez por semana (tipo+tema identifican
+// la actividad puntual, ej. tipo="lectura", tema="Technology & AI"). Repetirla la misma
+// semana no vuelve a sumar. "puntos" permite que una actividad valga distinto de las demás
+// (ej. Comunidad = 50). El estado real vive en Supabase (progreso_semanal), no en localStorage,
+// para que sobreviva entre dispositivos y sea la fuente de verdad del bloqueo semanal.
+async function otorgarPuntosActividad(tipo, tema, puntos = PUNTOS_POR_ACTIVIDAD) {
+  if (estaBloqueadaEstaSemana(tipo, tema)) return false;
+  const res = await fetch(PROGRESO_WEBHOOK_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ accion: 'otorgar', access_token: tokenAcceso(), tipo, tema, puntos })
+  });
+  const data = await res.json();
+  if (!progresoSemanaCache) progresoSemanaCache = { tipos: {}, puntos_semana_total: 0 };
+  if (data.otorgado) progresoSemanaCache.tipos[tipo + ':' + tema] = puntos;
+  progresoSemanaCache.puntos_semana_total = data.puntos_semana_total;
+  actualizarPuntosSemana(data.puntos_semana_total);
+  return data.otorgado;
 }
 
 function animoPorPuntos(puntos) {
@@ -1624,7 +1764,7 @@ function actualizarPuntosSemana(puntos) {
   document.getElementById('puntos-semana-num').textContent = puntos;
   document.getElementById('puntos-semana-fill').style.width = pct + '%';
 }
-actualizarPuntosSemana(calcularPuntosSemana());
+actualizarPuntosSemana(0);
 
 /* ---------- Puntos del mes: objetivo 400, acumulado a partir de los puntos semanales ---------- */
 const PUNTOS_MES = 0; // placeholder hasta que exista la lógica real de puntos
@@ -1657,7 +1797,7 @@ feedbackCerrarBtn.addEventListener('click', () => {
   feedbackAbrirBtn.hidden = false;
 });
 
-feedbackEnviarBtn.addEventListener('click', () => {
+feedbackEnviarBtn.addEventListener('click', async () => {
   if (!feedbackTexto.value.trim()) {
     feedbackConfirmacion.hidden = false;
     feedbackConfirmacion.className = 'feedback-confirmacion aviso';
@@ -1665,7 +1805,7 @@ feedbackEnviarBtn.addEventListener('click', () => {
     return;
   }
   // No se envía a ningún lado todavía — placeholder a propósito.
-  const sumo = otorgarPuntosActividad('feedback-semanal');
+  const sumo = await otorgarPuntosActividad('feedback', '');
   feedbackConfirmacion.hidden = false;
   feedbackConfirmacion.className = 'feedback-confirmacion';
   feedbackConfirmacion.textContent = sumo
@@ -1761,6 +1901,7 @@ VOCAB_CATEGORIAS.forEach(cat => {
   const card = document.createElement('div');
   card.className = 'vocab-card';
   card.tabIndex = 0;
+  card.dataset.categoria = cat.title;
   card.innerHTML = `
     <div class="vocab-photo">
       <img src="${pexelsUrl(cat.photo)}" alt="${escapeHtml(cat.title)}" loading="lazy">
@@ -1774,6 +1915,15 @@ VOCAB_CATEGORIAS.forEach(cat => {
   card.addEventListener('click', () => buscarVocabulario(cat.title));
   vocabGrid.appendChild(card);
 });
+
+function aplicarBloqueosVocabulario() {
+  vocabGrid.querySelectorAll('.vocab-card').forEach(card => {
+    const bloqueada = estaBloqueadaEstaSemana('vocabulario', card.dataset.categoria);
+    card.classList.toggle('vocab-card-bloqueada', bloqueada);
+    const bar = card.querySelector('.vocab-bar span');
+    if (bar) bar.textContent = bloqueada ? 'Ya hecho esta semana — volvé el lunes' : 'Ver vocabulario';
+  });
+}
 
 /* ---------- Vocabulario: detalle por categoría ---------- */
 const VOCAB_WEBHOOK_URL = "https://dominioservicion8nfacundo.cloud/webhook/valeria-vocabulario-buscar";
@@ -1940,6 +2090,17 @@ function iniciarQuizVocabulario() {
   reintentarBtn.hidden = true;
   checkBtn.disabled = false;
 
+  if (estaBloqueadaEstaSemana('vocabulario', vocabCategoriaActiva)) {
+    oracionesEl.innerHTML = '';
+    bankEl.innerHTML = '';
+    resumenEl.textContent = 'Ya completaste el quiz de esta categoría esta semana. Podés repasar las palabras y volver a hacer el quiz la semana que viene.';
+    wrap.hidden = false;
+    checkBtn.hidden = true;
+    document.getElementById('vocab-listo-btn').hidden = true;
+    return;
+  }
+  checkBtn.hidden = false;
+
   if (!vocabQuizItems.length) {
     oracionesEl.innerHTML = '';
     bankEl.innerHTML = '';
@@ -1980,7 +2141,7 @@ function colocarFicha(chip, destino) {
   if (blankAnterior && blankAnterior !== destino) blankAnterior.classList.remove('filled');
 }
 
-function revisarQuizVocabulario() {
+async function revisarQuizVocabulario() {
   let correctas = 0, incorrectas = 0, sinResponder = 0;
   document.querySelectorAll('#vocab-quiz-oraciones .vocab-blank').forEach(blank => {
     blank.classList.remove('vocab-blank-correcta', 'vocab-blank-incorrecta', 'vocab-blank-vacia');
@@ -2000,7 +2161,7 @@ function revisarQuizVocabulario() {
     }
   });
 
-  const sumo = otorgarPuntosActividad('vocabulario:' + vocabCategoriaActiva);
+  const sumo = await otorgarPuntosActividad('vocabulario', vocabCategoriaActiva);
   const mensajePuntos = sumo
     ? ` — sumaste ${PUNTOS_POR_ACTIVIDAD} puntos a tu semana.`
     : ' — esta categoría ya te sumó puntos esta semana.';
@@ -2336,10 +2497,12 @@ function renderCategoriasLectura() {
     const card = document.createElement('button');
     card.type = 'button';
     card.className = 'lectura-card';
+    card.dataset.categoria = categoria;
     card.innerHTML = `
       <div class="icon">${info.icono}</div>
       <h3>${escapeHtml(categoria)}</h3>
       <div class="lectura-card-foto" style="background-image:url('${info.foto}')"><span>${escapeHtml(categoria)}</span></div>
+      <div class="lectura-card-bloqueo-msg" hidden>Ya hecho esta semana — volvé el lunes</div>
     `;
     card.addEventListener('click', () => {
       lecturaSelector.hidden = true;
@@ -2350,6 +2513,15 @@ function renderCategoriasLectura() {
   });
 }
 renderCategoriasLectura();
+
+function aplicarBloqueosLectura() {
+  lecturaTemaGrid.querySelectorAll('.lectura-card').forEach(card => {
+    const bloqueada = estaBloqueadaEstaSemana('lectura', card.dataset.categoria);
+    card.classList.toggle('lectura-card-bloqueada', bloqueada);
+    const msg = card.querySelector('.lectura-card-bloqueo-msg');
+    if (msg) msg.hidden = !bloqueada;
+  });
+}
 
 function setLecturaResultado(html, cls) {
   lecturaResultado.className = 'resultado' + (cls ? ' ' + cls : '');
@@ -2411,15 +2583,21 @@ function renderLectura(data) {
     `;
   }).join('');
 
+  const yaHecha = estaBloqueadaEstaSemana('lectura', data.tema);
+
   setLecturaResultado(`
     <h2 class="lectura-titulo">${escapeHtml(data.titulo || '')}</h2>
     <div class="lectura-texto" lang="en">${textoAParrafosHtml(data.texto)}</div>
-    ${preguntas.length ? '<button type="button" class="lectura-comenzar" id="lectura-comenzar">Comenzar quiz</button>' : ''}
+    ${yaHecha
+      ? '<div class="lectura-quiz-resumen">Ya hiciste el quiz de esta lectura esta semana. Podés volver a leerla cuando quieras — el quiz vuelve a estar disponible la semana que viene.</div>'
+      : (preguntas.length ? '<button type="button" class="lectura-comenzar" id="lectura-comenzar">Comenzar quiz</button>' : '')}
     <div class="lectura-quiz" id="lectura-quiz" hidden>
       <div class="preguntas-lectura">${preguntasHtml}</div>
       <div class="lectura-quiz-resumen" id="lectura-quiz-resumen"></div>
     </div>
   `, 'mapa');
+
+  if (yaHecha) return;
 
   const comenzarBtn = lecturaResultado.querySelector('#lectura-comenzar');
   const quizEl = lecturaResultado.querySelector('#lectura-quiz');
@@ -2440,7 +2618,7 @@ function renderLectura(data) {
     if (!preguntaEl) return;
     const botones = preguntaEl.querySelectorAll('.opcion-lectura');
     botones.forEach((btn, bIdx) => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', async () => {
         const acerto = esOpcionCorrecta(opciones[bIdx], p.respuesta, bIdx);
         botones.forEach((b, i) => {
           b.disabled = true;
@@ -2455,7 +2633,7 @@ function renderLectura(data) {
         if (estado.respondidas === preguntas.length && resumenEl) {
           const minimoParaPuntos = Math.ceil(preguntas.length * 0.75);
           if (estado.correctas >= minimoParaPuntos) {
-            const sumo = otorgarPuntosActividad('lectura:' + data.tema);
+            const sumo = await otorgarPuntosActividad('lectura', data.tema);
             resumenEl.textContent = sumo
               ? `¡Bien! ${estado.correctas}/${preguntas.length} correctas — sumaste ${PUNTOS_POR_ACTIVIDAD} puntos a tu semana.`
               : `¡Bien! ${estado.correctas}/${preguntas.length} correctas — esta categoría ya te sumó puntos esta semana.`;
@@ -2492,6 +2670,7 @@ function esOpcionCorrecta(opcion, respuesta, index) {
 /* ---------- Conversaciones en comunidad ---------- */
 const COMUNIDAD_BUSCAR_URL = "https://dominioservicion8nfacundo.cloud/webhook/valeria-conversaciones-buscar";
 const COMUNIDAD_PARTICIPAR_URL = "https://dominioservicion8nfacundo.cloud/webhook/valeria-conversaciones-participar";
+const COMUNIDAD_COMPLETAR_URL = "https://dominioservicion8nfacundo.cloud/webhook/valeria-conversaciones-completar-clase";
 
 const COMUNIDAD_CATEGORIAS = [
   'Hobbies and Free Time',
@@ -2507,7 +2686,6 @@ const comunidadGrid = document.getElementById('comunidad-grid');
 const comunidadDetail = document.getElementById('comunidad-detail');
 const comunidadDetailBody = document.getElementById('comunidad-detail-body');
 const comunidadDetailTitle = document.getElementById('comunidad-detail-title');
-const comunidadEmailInput = document.getElementById('comunidad-email');
 const comunidadSesionesList = document.getElementById('comunidad-sesiones-list');
 const comunidadHorarioInput = document.getElementById('comunidad-horario');
 const comunidadProponerBtn = document.getElementById('comunidad-proponer-btn');
@@ -2525,6 +2703,8 @@ let comunidadTemaActivo = null;
 let comunidadCargada = false;
 let comunidadPreguntasActivas = [];
 let comunidadClaseIndex = 0;
+let comunidadSesionParaClaseId = null;
+let comunidadMotivoClase = 'sin_sesion';
 
 function salirDeClaseComunidad() {
   comunidadClaseSection.hidden = true;
@@ -2541,24 +2721,43 @@ function renderPreguntaClaseComunidad() {
 }
 
 comunidadClaseBtn.addEventListener('click', () => {
-  if (!comunidadPreguntasActivas.length) return;
+  if (!comunidadPreguntasActivas.length || comunidadMotivoClase !== 'disponible') return;
   comunidadClaseIndex = 0;
   renderPreguntaClaseComunidad();
   comunidadDetailBody.hidden = true;
   comunidadClaseSection.hidden = false;
 });
 
-comunidadClaseSiguiente.addEventListener('click', () => {
+comunidadClaseSiguiente.addEventListener('click', async () => {
   comunidadClaseIndex++;
   if (comunidadClaseIndex >= comunidadPreguntasActivas.length) {
     comunidadClaseProgreso.hidden = true;
     comunidadClasePregunta.hidden = true;
     comunidadClaseSiguiente.hidden = true;
     comunidadClaseFin.hidden = false;
-    const sumo = otorgarPuntosActividad('comunidad:' + comunidadTemaActivo.id, 50);
-    document.getElementById('comunidad-clase-puntos-msg').textContent = sumo
-      ? '¡Sumaste 50 puntos a tu semana!'
-      : 'Esta conversación ya te sumó puntos esta semana.';
+    const msgEl = document.getElementById('comunidad-clase-puntos-msg');
+    msgEl.textContent = 'Guardando...';
+    try {
+      const res = await fetch(COMUNIDAD_COMPLETAR_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sesion_id: comunidadSesionParaClaseId, alumno_id: alumnoId() })
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      if (data.puntos_otorgados) {
+        if (!progresoSemanaCache) progresoSemanaCache = { tipos: {}, puntos_semana_total: 0 };
+        progresoSemanaCache.tipos['comunidad:' + comunidadTemaActivo.nombre] = 50;
+        progresoSemanaCache.puntos_semana_total = (progresoSemanaCache.puntos_semana_total || 0) + 50;
+        actualizarPuntosSemana(progresoSemanaCache.puntos_semana_total);
+        comunidadMotivoClase = 'completada';
+        msgEl.textContent = '¡Sumaste 50 puntos a tu semana!';
+      } else {
+        msgEl.textContent = 'Guardado — todavía falta que tu compañero/a complete su parte. Los puntos se suman cuando ambos terminan.';
+      }
+    } catch (err) {
+      msgEl.textContent = 'No se pudo guardar tu respuesta (' + escapeHtml(err.message) + ').';
+    }
   } else {
     renderPreguntaClaseComunidad();
   }
@@ -2566,11 +2765,6 @@ comunidadClaseSiguiente.addEventListener('click', () => {
 
 comunidadClaseSalir.addEventListener('click', salirDeClaseComunidad);
 comunidadClaseTerminar.addEventListener('click', salirDeClaseComunidad);
-
-comunidadEmailInput.value = localStorage.getItem('alumno_email') || '';
-comunidadEmailInput.addEventListener('change', () => {
-  localStorage.setItem('alumno_email', comunidadEmailInput.value.trim());
-});
 
 document.getElementById('comunidad-back').addEventListener('click', () => {
   comunidadDetail.hidden = true;
@@ -2665,6 +2859,17 @@ function aplicarFocoComunidad(foco) {
   });
 }
 
+function actualizarBotonClaseComunidad() {
+  const textos = {
+    sin_sesion: 'Agendá una conversación real primero',
+    pendiente_horario: 'Disponible después de tu conversación',
+    completada: 'Ya completaste esta clase esta semana',
+    disponible: 'Comenzar la clase'
+  };
+  comunidadClaseBtn.textContent = textos[comunidadMotivoClase] || textos.sin_sesion;
+  comunidadClaseBtn.disabled = comunidadMotivoClase !== 'disponible' || !comunidadPreguntasActivas.length;
+}
+
 async function abrirTemaComunidad(temaId, nombre, opciones = {}) {
   comunidadTemaActivo = { id: temaId, nombre };
   comunidadDetailTitle.textContent = nombre;
@@ -2673,7 +2878,9 @@ async function abrirTemaComunidad(temaId, nombre, opciones = {}) {
   comunidadSelector.hidden = true;
   comunidadDetail.hidden = false;
   comunidadPreguntasActivas = [];
-  comunidadClaseBtn.disabled = true;
+  comunidadMotivoClase = 'sin_sesion';
+  comunidadSesionParaClaseId = null;
+  actualizarBotonClaseComunidad();
   salirDeClaseComunidad();
   if (opciones.foco) aplicarFocoComunidad(opciones.foco);
 
@@ -2681,14 +2888,16 @@ async function abrirTemaComunidad(temaId, nombre, opciones = {}) {
     const res = await fetch(COMUNIDAD_BUSCAR_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tema_id: temaId })
+      body: JSON.stringify({ tema_id: temaId, alumno_id: alumnoId() })
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
 
     const preguntas = (data.tema && data.tema.preguntas) || [];
     comunidadPreguntasActivas = preguntas;
-    comunidadClaseBtn.disabled = !preguntas.length;
+    comunidadMotivoClase = data.motivo || 'sin_sesion';
+    comunidadSesionParaClaseId = data.sesion_para_clase_id || null;
+    actualizarBotonClaseComunidad();
 
     renderSesionesAbiertas(data.sesiones_abiertas || []);
   } catch (err) {
@@ -2740,14 +2949,12 @@ function renderSesionesAbiertas(sesiones) {
 }
 
 function getEmailAlumnoComunidad() {
-  const email = comunidadEmailInput.value.trim();
-  if (!email) {
-    comunidadEmailInput.focus();
-    mostrarResultadoComunidad('Ingresá tu email para poder participar.', true);
+  const sesion = getSesion();
+  if (!sesion || !sesion.email) {
+    mostrarResultadoComunidad('Tu sesión expiró — volvé a entrar para participar.', true);
     return null;
   }
-  localStorage.setItem('alumno_email', email);
-  return email;
+  return sesion.email;
 }
 
 function mostrarResultadoComunidad(html, esError) {
@@ -2765,7 +2972,7 @@ async function participarEnSesion(sesionId, btn) {
     const res = await fetch(COMUNIDAD_PARTICIPAR_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sesion_id: sesionId, email })
+      body: JSON.stringify({ sesion_id: sesionId, email, alumno_id: alumnoId() })
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
@@ -2804,6 +3011,7 @@ comunidadProponerBtn.addEventListener('click', async () => {
         tema_id: comunidadTemaActivo.id,
         tema_nombre: comunidadTemaActivo.nombre,
         email,
+        alumno_id: alumnoId(),
         horario: new Date(horario).toISOString()
       })
     });
