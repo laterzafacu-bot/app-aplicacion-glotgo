@@ -1448,7 +1448,7 @@
           <div class="puntos-semana-block">
             <div class="puntos-header">
               <span>Puntos esta semana</span>
-              <span class="puntos-valor"><strong id="puntos-semana-num">0</strong> / 100</span>
+              <span class="puntos-valor"><strong id="puntos-semana-num">0</strong> / 1000</span>
             </div>
             <div class="progress-bar"><div class="fill" id="puntos-semana-fill" style="width:0%;"></div></div>
           </div>
@@ -1466,7 +1466,7 @@
           <div style="margin-top:14px;">
             <div class="nivel-row"><span>Tu nivel actual: <strong>Intermedio</strong></span></div>
             <div class="progress-bar" style="margin-top:10px;"><div class="fill" id="puntos-mes-fill" style="width:0%;"></div></div>
-            <div class="tiempo-row"><span><strong id="puntos-mes-num">0</strong> puntos este mes</span><span>400 puntos</span></div>
+            <div class="tiempo-row"><span><strong id="puntos-mes-num">0</strong> puntos este mes</span><span>4000 puntos</span></div>
           </div>
           <select class="cta-select" id="estudiar-select">
             <option value="" disabled selected>Elegí qué estudiar</option>
@@ -1744,7 +1744,7 @@ DIAS_SEMANA.forEach(d => {
 });
 
 /* ---------- Puntos de la semana: ánimo del "fuegito" ---------- */
-const PUNTOS_META_SEMANAL = 100;
+const PUNTOS_META_SEMANAL = 1000; // valor de prueba (en producción: 100)
 const PUNTOS_POR_ACTIVIDAD = 25;
 
 function claveSemanaActual() {
@@ -1767,6 +1767,7 @@ async function cargarProgresoSemana() {
     const data = await res.json();
     progresoSemanaCache = data;
     actualizarPuntosSemana(data.puntos_semana_total || 0);
+    actualizarPuntosMes(data.puntos_mes_total || data.puntos_semana_total || 0);
     aplicarBloqueosVocabulario();
     aplicarBloqueosLectura();
   } catch (e) {
@@ -1797,12 +1798,16 @@ async function otorgarPuntosActividad(tipo, tema, puntos = PUNTOS_POR_ACTIVIDAD)
   if (data.otorgado) progresoSemanaCache.tipos[tipo + ':' + tema] = puntos;
   progresoSemanaCache.puntos_semana_total = data.puntos_semana_total;
   actualizarPuntosSemana(data.puntos_semana_total);
+  if (data.puntos_mes_total !== undefined) {
+    progresoSemanaCache.puntos_mes_total = data.puntos_mes_total;
+    actualizarPuntosMes(data.puntos_mes_total);
+  }
   return data.otorgado;
 }
 
 function animoPorPuntos(puntos) {
-  if (puntos >= 100) return '🔥';
-  if (puntos >= 50) return '😊';
+  if (puntos >= PUNTOS_META_SEMANAL) return '🔥';
+  if (puntos >= PUNTOS_META_SEMANAL / 2) return '😊';
   return '😔';
 }
 
@@ -1815,9 +1820,9 @@ function actualizarPuntosSemana(puntos) {
 }
 actualizarPuntosSemana(0);
 
-/* ---------- Puntos del mes: objetivo 400, acumulado a partir de los puntos semanales ---------- */
-const PUNTOS_MES = 0; // placeholder hasta que exista la lógica real de puntos
-const PUNTOS_META_MENSUAL = 400;
+/* ---------- Puntos del mes: objetivo 4000 (prueba), suma de las semanas del mes calendario ---------- */
+const PUNTOS_MES = 0;
+const PUNTOS_META_MENSUAL = 4000; // valor de prueba (en producción: 400)
 
 function actualizarPuntosMes(puntos) {
   const pct = Math.max(0, Math.min(100, Math.round((puntos / PUNTOS_META_MENSUAL) * 100)));
@@ -2012,11 +2017,14 @@ async function buscarVocabulario(categoria) {
     const res = await fetch(VOCAB_WEBHOOK_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ categoria })
+      body: JSON.stringify({ categoria, access_token: tokenAcceso() })
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     const palabras = data.palabras || [];
+    if (data.total_tandas > 1) {
+      vocabDetailTitle.textContent = categoria + ' (tanda ' + data.tanda + ' de ' + data.total_tandas + ')';
+    }
     if (!palabras.length) {
       vocabDetailResultado.className = 'resultado vacio';
       vocabDetailResultado.textContent = 'Todavía no hay vocabulario cargado para "' + categoria + '".';
@@ -2799,6 +2807,8 @@ comunidadClaseSiguiente.addEventListener('click', async () => {
         progresoSemanaCache.tipos['comunidad:' + comunidadTemaActivo.nombre] = 50;
         progresoSemanaCache.puntos_semana_total = (progresoSemanaCache.puntos_semana_total || 0) + 50;
         actualizarPuntosSemana(progresoSemanaCache.puntos_semana_total);
+        progresoSemanaCache.puntos_mes_total = (progresoSemanaCache.puntos_mes_total || 0) + 50;
+        actualizarPuntosMes(progresoSemanaCache.puntos_mes_total);
         comunidadMotivoClase = 'completada';
         msgEl.textContent = '¡Sumaste 50 puntos a tu semana!';
       } else {
