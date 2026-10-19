@@ -1200,7 +1200,22 @@
 
   .proponer-section { margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--border); }
   .proponer-row { display: flex; gap: 10px; flex-wrap: wrap; }
-  .proponer-row input[type=datetime-local] {
+  .sesion-card .participantes {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--gris-claro);
+    color: var(--azul-oscuro);
+    border-radius: 999px;
+    padding: 3px 10px;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .sesion-card .lado { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .login-logo { text-align: center; margin-bottom: 6px; }
+  .proponer-row input[type=date],
+  .proponer-row select {
     padding: 10px 14px;
     border: 1px solid var(--border);
     border-radius: 8px;
@@ -1376,7 +1391,10 @@
 
 <div id="login-gate">
   <div class="login-card">
-    <h1>Valeria Inglés</h1>
+    <div class="login-logo" aria-hidden="true">
+      <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#2862b4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><text x="12" y="14.6" text-anchor="middle" font-size="6.5" font-weight="700" fill="#2862b4" stroke="none" font-family="Arial,sans-serif">Hi!</text></svg>
+    </div>
+    <h1>GlotGo</h1>
     <p class="sub">Entrá con tu cuenta para ver tu progreso.</p>
     <form id="login-form">
       <label for="login-email">Email</label>
@@ -1397,8 +1415,10 @@
   <aside class="sidebar">
    <div class="sidebar-inner">
     <div class="brand">
-      <div class="logo">V</div>
-      <div class="name">Valeria Inglés</div>
+      <div class="logo">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><text x="12" y="14.6" text-anchor="middle" font-size="6.5" font-weight="700" fill="currentColor" stroke="none" font-family="Arial,sans-serif">Hi!</text></svg>
+      </div>
+      <div class="name">GlotGo</div>
       <button type="button" id="logout-btn" title="Cerrar sesión" style="margin-left:auto;background:none;border:none;cursor:pointer;color:#5C7A9E;font-size:12px;">Salir</button>
     </div>
     <nav class="nav-list">
@@ -1579,7 +1599,8 @@
           <div class="proponer-section">
             <h3>¿Ninguno te sirve? Proponé el tuyo</h3>
             <div class="proponer-row">
-              <input type="datetime-local" id="comunidad-horario" step="3600">
+              <input type="date" id="comunidad-horario" aria-label="Fecha">
+              <select id="comunidad-hora" aria-label="Hora"></select>
               <button type="button" id="comunidad-proponer-btn">Proponer este horario</button>
             </div>
           </div>
@@ -2745,7 +2766,32 @@ const comunidadDetailBody = document.getElementById('comunidad-detail-body');
 const comunidadDetailTitle = document.getElementById('comunidad-detail-title');
 const comunidadSesionesList = document.getElementById('comunidad-sesiones-list');
 const comunidadHorarioInput = document.getElementById('comunidad-horario');
+const comunidadHoraSelect = document.getElementById('comunidad-hora');
 const comunidadProponerBtn = document.getElementById('comunidad-proponer-btn');
+
+/* Horarios solo en punto (cada 1 hora): select de 00:00 a 23:00 + fecha sin hora */
+(function initSelectorHorarioComunidad() {
+  comunidadHoraSelect.innerHTML = '<option value="">Hora</option>';
+  for (let h = 0; h < 24; h++) {
+    const hh = String(h).padStart(2, '0');
+    comunidadHoraSelect.insertAdjacentHTML('beforeend', '<option value="' + hh + ':00">' + hh + ':00</option>');
+  }
+  function hoyLocalISO() {
+    const n = new Date();
+    return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0');
+  }
+  comunidadHorarioInput.min = hoyLocalISO();
+  function deshabilitarHorasPasadas() {
+    const esHoy = comunidadHorarioInput.value === hoyLocalISO();
+    const horaActual = new Date().getHours();
+    [...comunidadHoraSelect.options].forEach((opt, i) => {
+      opt.disabled = esHoy && i > 0 && (i - 1) <= horaActual;
+    });
+    if (comunidadHoraSelect.selectedOptions[0] && comunidadHoraSelect.selectedOptions[0].disabled) comunidadHoraSelect.value = '';
+  }
+  comunidadHorarioInput.addEventListener('change', deshabilitarHorasPasadas);
+  comunidadHorarioInput.addEventListener('focus', () => { comunidadHorarioInput.min = hoyLocalISO(); });
+})();
 const comunidadResultado = document.getElementById('comunidad-resultado');
 const comunidadClaseBtn = document.getElementById('comunidad-clase-btn');
 const comunidadClaseSection = document.getElementById('comunidad-clase');
@@ -2991,6 +3037,8 @@ function formatearHorarioComunidad(iso) {
 
 function renderSesionesAbiertas(sesiones) {
   comunidadSesionesList.innerHTML = '';
+  const ahora = Date.now();
+  sesiones = sesiones.filter(s => new Date(s.horario).getTime() > ahora);
   if (!sesiones.length) {
     comunidadSesionesList.innerHTML = '<div class="sin-sesiones">Todavía nadie propuso un horario para este tema. ¡Sé el primero!</div>';
     return;
@@ -3000,7 +3048,10 @@ function renderSesionesAbiertas(sesiones) {
     row.className = 'sesion-card';
     row.innerHTML = `
       <div class="horario">${escapeHtml(formatearHorarioComunidad(s.horario))}<span class="sub">Esperando un segundo participante</span></div>
-      <button type="button">Participar</button>
+      <div class="lado">
+        <span class="participantes" title="Personas anotadas">${Number(s.participantes) || 1} 👤</span>
+        <button type="button">Participar</button>
+      </div>
     `;
     row.querySelector('button').addEventListener('click', (e) => participarEnSesion(s.id, e.currentTarget));
     comunidadSesionesList.appendChild(row);
@@ -3051,13 +3102,13 @@ async function participarEnSesion(sesionId, btn) {
 comunidadProponerBtn.addEventListener('click', async () => {
   const email = getEmailAlumnoComunidad();
   if (!email) return;
-  const horario = comunidadHorarioInput.value;
-  if (!horario) {
-    mostrarResultadoComunidad('Elegí una fecha y hora para proponer.', true);
+  if (!comunidadHorarioInput.value || !comunidadHoraSelect.value) {
+    mostrarResultadoComunidad('Elegí una fecha y una hora para proponer.', true);
     return;
   }
-  if (new Date(horario).getMinutes() !== 0) {
-    mostrarResultadoComunidad('Los horarios son cada 1 hora en punto (ej. 18:00) — elegí una hora exacta.', true);
+  const horario = comunidadHorarioInput.value + 'T' + comunidadHoraSelect.value;
+  if (new Date(horario).getTime() <= Date.now()) {
+    mostrarResultadoComunidad('Ese horario ya pasó — elegí uno a futuro.', true);
     return;
   }
   comunidadProponerBtn.disabled = true;
@@ -3082,6 +3133,7 @@ comunidadProponerBtn.addEventListener('click', async () => {
       false
     );
     comunidadHorarioInput.value = '';
+    comunidadHoraSelect.value = '';
     refrescarSesionesComunidad();
   } catch (err) {
     mostrarResultadoComunidad('No se pudo crear el horario (' + escapeHtml(err.message) + ').', true);
