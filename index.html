@@ -1126,6 +1126,14 @@
     text-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
     z-index: 1;
   }
+  .comunidad-card.con-foto {
+    background-size: cover;
+    background-position: center;
+    justify-content: flex-end;
+    min-height: 210px;
+    filter: none;
+  }
+  .comunidad-card.con-foto.proximamente { filter: grayscale(.6); }
   .comunidad-card-ilu { width: 100%; max-width: 190px; z-index: 1; }
   .comunidad-card-ilu svg { width: 100%; height: auto; display: block; }
   .comunidad-card-badge {
@@ -1141,18 +1149,19 @@
     inset: auto 0 0 0;
     padding: 9px 10px 10px;
     text-align: center;
-    color: var(--blanco);
-    background: rgba(14, 62, 130, 0.72);
+    color: var(--azul-oscuro);
+    background: var(--blanco);
+    box-shadow: 0 -4px 14px rgba(0, 0, 0, .18);
     transform: translateY(100%);
     opacity: 0;
     transition: transform .2s ease, opacity .2s ease;
     z-index: 3;
   }
   .comunidad-card-cta .cta-info { display: block; font-size: 12px; font-weight: 500; line-height: 1.35; margin-bottom: 3px; }
-  .comunidad-card-cta .cta-accion { display: block; font-size: 13px; font-weight: 800; }
+  .comunidad-card-cta .cta-accion { display: block; font-size: 13px; font-weight: 800; color: var(--celeste-dark); }
   .comunidad-card:hover .comunidad-card-cta { transform: translateY(0); opacity: 1; }
-  .comunidad-card.proximamente .comunidad-card-cta { background: rgba(26, 26, 26, 0.6); }
-  @media (hover: none) { .comunidad-card-cta { transform: none; opacity: 1; position: static; background: rgba(14, 62, 130, .45); border-radius: 10px; margin-top: 4px; width: 100%; box-sizing: border-box; } }
+  .comunidad-card.proximamente .comunidad-card-cta .cta-accion { color: var(--gris); }
+  @media (hover: none) { .comunidad-card-cta { transform: none; opacity: 1; position: static; border-radius: 10px; margin-top: 4px; width: 100%; box-sizing: border-box; } }
 
   .back-link {
     background: none;
@@ -1967,8 +1976,10 @@ function enhanceSelect(select) {
     wrap.classList.remove('open');
     document.removeEventListener('click', fuera, true);
     window.removeEventListener('resize', cerrar);
-    window.removeEventListener('scroll', cerrar, true);
+    window.removeEventListener('scroll', alScrollear, true);
   }
+  /* si scrollea la propia lista (para bajar a otras opciones) no se cierra; solo si scrollea la página */
+  function alScrollear(e) { if (list && e.target instanceof Node && list.contains(e.target)) return; cerrar(); }
   function fuera(e) { if (list && !list.contains(e.target) && !btn.contains(e.target)) cerrar(); }
   function abrir() {
     list = document.createElement('div');
@@ -1999,7 +2010,7 @@ function enhanceSelect(select) {
     const sel = list.querySelector('.sel'); if (sel) sel.scrollIntoView({ block: 'nearest' });
     document.addEventListener('click', fuera, true);
     window.addEventListener('resize', cerrar);
-    window.addEventListener('scroll', cerrar, true);
+    window.addEventListener('scroll', alScrollear, true);
   }
   btn.addEventListener('click', () => (list ? cerrar() : abrir()));
   btn.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrar(); });
@@ -3014,6 +3025,14 @@ document.querySelector('.nav-item[data-view="comunidad"]').addEventListener('cli
   }
 });
 
+/* Fotos de cada tema; los temas sin foto usan la ilustración de respaldo */
+const COMUNIDAD_FOTOS = {
+  'Hobbies and Free Time': 'imagenes-comunidad/hobbies.jpg',
+  'Travel and Tourism': 'imagenes-comunidad/travel.jpg',
+  'Work and Employment': 'imagenes-comunidad/work.jpg',
+  'Food and Dining Out': 'imagenes-comunidad/food.jpg'
+};
+
 const COMUNIDAD_EMOJIS = {
   'Hobbies and Free Time': ['🎨', '🎸'],
   'Travel and Tourism': ['✈️', '🌍'],
@@ -3048,9 +3067,14 @@ function renderGridComunidad() {
     const card = document.createElement('div');
     card.className = 'comunidad-card proximamente';
     card.dataset.nombre = nombre;
+    const foto = COMUNIDAD_FOTOS[nombre];
+    if (foto) {
+      card.classList.add('con-foto');
+      card.style.backgroundImage = 'linear-gradient(to top, rgba(10, 35, 80, .78) 0%, rgba(10, 35, 80, .12) 55%, rgba(10, 35, 80, 0) 100%), url("' + foto + '")';
+    }
     card.innerHTML = `
       <div class="comunidad-card-badge" hidden></div>
-      <div class="comunidad-card-ilu">${ilustracionComunidad(nombre)}</div>
+      ${foto ? '' : '<div class="comunidad-card-ilu">' + ilustracionComunidad(nombre) + '</div>'}
       <div class="comunidad-card-nombre">${escapeHtml(nombre)}</div>
       <div class="comunidad-card-cta"><span class="cta-info">Todavía no está disponible</span><span class="cta-accion">Próximamente</span></div>
     `;
