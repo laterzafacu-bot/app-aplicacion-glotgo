@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>App de Alumnos</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1318,12 +1319,45 @@
   @media (max-width: 860px) {
     .cards-row { grid-template-columns: 1fr; }
   }
+
+  /* ---------- Celulares: el menú se superpone en vez de empujar el contenido ---------- */
+  @media (max-width: 768px) {
+    .app-shell { height: 100dvh; }
+    .sidebar {
+      position: absolute;
+      top: 0; bottom: 0; left: 0;
+      z-index: 40;
+      overflow-y: auto;
+      box-shadow: 4px 0 24px rgba(14, 62, 130, 0.18);
+    }
+    body.sidebar-collapsed .sidebar { box-shadow: none; }
+    body:not(.sidebar-collapsed) .app-shell::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(14, 62, 130, 0.35);
+      z-index: 35;
+    }
+    .sidebar-toggle { z-index: 45; }
+    main.content { padding: 16px 16px 90px; }
+    body.sidebar-collapsed main.content { padding-top: 68px; }
+    .nav-item { padding: 14px 12px; font-size: 15px; }
+    h1.greeting { font-size: 19px; }
+    .view:not(#view-home) h1.greeting { font-size: 16px; padding: 12px 14px; letter-spacing: 0.04em; }
+    input, textarea, select { font-size: 16px; }
+    #login-gate .login-card { padding: 28px 22px; }
+  }
+  @media (max-width: 560px) {
+    #comunidad-grid { grid-template-columns: 1fr; }
+    .feedback-burbuja { padding: 12px 16px; gap: 8px; max-width: 220px; }
+    .feedback-emoji { font-size: 22px; }
+  }
 </style>
 </head>
 <body class="sidebar-collapsed">
 <script>
   // Menú lateral cerrado por defecto; si el alumno lo dejó abierto, se restaura antes del primer render.
-  try { if (localStorage.getItem('sidebar_abierta') === '1') document.body.classList.remove('sidebar-collapsed'); } catch (e) {}
+  try { if (localStorage.getItem('sidebar_abierta') === '1' && window.innerWidth > 768) document.body.classList.remove('sidebar-collapsed'); } catch (e) {}
 </script>
 
 <style>
@@ -1684,6 +1718,18 @@ sidebarToggle.addEventListener('click', () => {
   actualizarSidebarToggle();
 });
 actualizarSidebarToggle();
+
+/* En celular el menú es una capa: se cierra al elegir una sección o al tocar fuera. */
+const esCelular = () => window.innerWidth <= 768;
+function cerrarSidebarEnCelular() {
+  if (!esCelular() || document.body.classList.contains('sidebar-collapsed')) return;
+  document.body.classList.add('sidebar-collapsed');
+  actualizarSidebarToggle();
+}
+navItems.forEach(btn => btn.addEventListener('click', cerrarSidebarEnCelular));
+document.getElementById('app-shell').addEventListener('click', e => {
+  if (e.target === e.currentTarget) cerrarSidebarEnCelular();
+});
 
 /* ---------- Mock data del Home (placeholder hasta tener datos reales de alumno) ---------- */
 const DIAS_SEMANA = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
