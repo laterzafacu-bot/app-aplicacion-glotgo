@@ -1093,14 +1093,16 @@
   #comunidad-grid { grid-template-columns: repeat(2, 1fr); }
   .comunidad-card {
     position: relative;
-    min-height: 150px;
+    min-height: 190px;
     border-radius: 14px;
     overflow: hidden;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 8px;
     text-align: center;
-    padding: 20px;
+    padding: 18px 20px 20px;
     cursor: pointer;
     filter: saturate(55%) brightness(1.08);
     transition: transform .15s ease, box-shadow .15s ease, filter .25s ease;
@@ -1124,21 +1126,33 @@
     text-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
     z-index: 1;
   }
+  .comunidad-card-ilu { width: 100%; max-width: 190px; z-index: 1; }
+  .comunidad-card-ilu svg { width: 100%; height: auto; display: block; }
+  .comunidad-card-badge {
+    position: absolute; top: 10px; right: 10px; z-index: 2;
+    background: var(--blanco); color: var(--azul-oscuro);
+    border-radius: 999px; padding: 4px 11px;
+    font-size: 13px; font-weight: 800;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .18);
+  }
+  .comunidad-card-badge.vacio { background: rgba(255, 255, 255, .55); color: var(--gris); }
   .comunidad-card-cta {
     position: absolute;
     inset: auto 0 0 0;
-    padding: 10px 0;
+    padding: 9px 10px 10px;
     text-align: center;
-    font-size: 13px;
-    font-weight: 700;
     color: var(--blanco);
-    background: rgba(14, 62, 130, 0.55);
+    background: rgba(14, 62, 130, 0.72);
     transform: translateY(100%);
     opacity: 0;
     transition: transform .2s ease, opacity .2s ease;
+    z-index: 3;
   }
+  .comunidad-card-cta .cta-info { display: block; font-size: 12px; font-weight: 500; line-height: 1.35; margin-bottom: 3px; }
+  .comunidad-card-cta .cta-accion { display: block; font-size: 13px; font-weight: 800; }
   .comunidad-card:hover .comunidad-card-cta { transform: translateY(0); opacity: 1; }
-  .comunidad-card.proximamente .comunidad-card-cta { background: rgba(26, 26, 26, 0.55); }
+  .comunidad-card.proximamente .comunidad-card-cta { background: rgba(26, 26, 26, 0.6); }
+  @media (hover: none) { .comunidad-card-cta { transform: none; opacity: 1; position: static; background: rgba(14, 62, 130, .45); border-radius: 10px; margin-top: 4px; width: 100%; box-sizing: border-box; } }
 
   .back-link {
     background: none;
@@ -1214,14 +1228,52 @@
   }
   .sesion-card .lado { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
   .login-logo { text-align: center; margin-bottom: 6px; }
-  .proponer-row input[type=date],
-  .proponer-row select {
+  /* Dropdown propio (reemplaza al select nativo) */
+  .dd { position: relative; display: inline-block; }
+  .dd.dd-block { display: flex; flex-direction: column; margin-top: auto; }
+  .dd-btn {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    min-width: 150px; width: 100%;
+    background: var(--blanco);
+    color: var(--texto);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
     padding: 10px 14px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    font-family: inherit;
-    font-size: 13px;
+    font-family: inherit; font-size: 13.5px; font-weight: 600;
+    cursor: pointer;
+    transition: border-color .15s ease, box-shadow .15s ease;
   }
+  .dd-btn:hover { border-color: var(--celeste); }
+  .dd.open .dd-btn, .dd-btn:focus-visible { border-color: var(--celeste); box-shadow: 0 0 0 3px rgba(49, 174, 205, .2); outline: none; }
+  .dd-btn.vacio .dd-label { color: var(--gris); font-weight: 500; }
+  .dd-btn .dd-chev { flex-shrink: 0; transition: transform .2s ease; }
+  .dd.open .dd-chev { transform: rotate(180deg); }
+  .dd-btn.cta-select { background: var(--celeste); color: var(--blanco); border: none; padding: 12px 16px; font-size: 14px; margin-top: 0; }
+  .dd-btn.cta-select:hover { background: var(--celeste-dark); }
+  .dd-btn.cta-select.vacio .dd-label { color: var(--blanco); font-weight: 600; }
+  .dd-list {
+    position: fixed; z-index: 1000;
+    background: var(--blanco);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 14px 34px rgba(14, 62, 130, .18);
+    padding: 6px;
+    max-height: 260px; overflow-y: auto;
+    animation: ddIn .14s ease;
+  }
+  @keyframes ddIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+  .dd-item {
+    display: block; width: 100%; text-align: left;
+    background: none; border: none; border-radius: 8px;
+    padding: 9px 12px;
+    font-family: inherit; font-size: 13.5px; color: var(--texto);
+    cursor: pointer;
+  }
+  .dd-item:hover:not([disabled]) { background: var(--celeste-bg); color: var(--azul-oscuro); }
+  .dd-item.sel { background: var(--celeste-bg); color: var(--azul-oscuro); font-weight: 700; }
+  .dd-item[disabled] { color: #b5bcc3; cursor: not-allowed; }
+  .dd-item.placeholder { display: none; }
+  select.dd-native { display: none; }
   .proponer-row button {
     background: var(--azul-oscuro);
     color: var(--blanco);
@@ -1599,7 +1651,7 @@
           <div class="proponer-section">
             <h3>¿Ninguno te sirve? Proponé el tuyo</h3>
             <div class="proponer-row">
-              <input type="date" id="comunidad-horario" aria-label="Fecha">
+              <select id="comunidad-horario" aria-label="Fecha"></select>
               <select id="comunidad-hora" aria-label="Hora"></select>
               <button type="button" id="comunidad-proponer-btn">Proponer este horario</button>
             </div>
@@ -1889,13 +1941,81 @@ feedbackEnviarBtn.addEventListener('click', async () => {
   feedbackTexto.value = '';
 });
 
+/* ---------- Dropdown propio (con el estilo de la app) en lugar del select nativo ---------- */
+function enhanceSelect(select) {
+  const wrap = document.createElement('div');
+  wrap.className = 'dd' + (select.classList.contains('cta-select') ? ' dd-block' : '');
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'dd-btn' + (select.classList.contains('cta-select') ? ' cta-select' : '');
+  btn.setAttribute('aria-haspopup', 'listbox');
+  btn.innerHTML = '<span class="dd-label"></span><svg class="dd-chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
+  select.classList.add('dd-native');
+  select.parentNode.insertBefore(wrap, select);
+  wrap.appendChild(select);
+  wrap.appendChild(btn);
+  let list = null;
+
+  function sync() {
+    const opt = select.options[select.selectedIndex];
+    btn.querySelector('.dd-label').textContent = opt ? opt.textContent : '';
+    btn.classList.toggle('vacio', !select.value);
+  }
+  function cerrar() {
+    if (!list) return;
+    list.remove(); list = null;
+    wrap.classList.remove('open');
+    document.removeEventListener('click', fuera, true);
+    window.removeEventListener('resize', cerrar);
+    window.removeEventListener('scroll', cerrar, true);
+  }
+  function fuera(e) { if (list && !list.contains(e.target) && !btn.contains(e.target)) cerrar(); }
+  function abrir() {
+    list = document.createElement('div');
+    list.className = 'dd-list';
+    list.setAttribute('role', 'listbox');
+    [...select.options].forEach((opt, i) => {
+      const it = document.createElement('button');
+      it.type = 'button';
+      it.className = 'dd-item' + (i === select.selectedIndex ? ' sel' : '') + (opt.value === '' && opt.disabled ? ' placeholder' : '');
+      it.textContent = opt.textContent;
+      it.disabled = opt.disabled;
+      it.addEventListener('click', () => {
+        select.selectedIndex = i;
+        cerrar();
+        sync();
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+      list.appendChild(it);
+    });
+    document.body.appendChild(list);
+    const r = btn.getBoundingClientRect();
+    const alto = Math.min(list.scrollHeight, 260);
+    const abajo = window.innerHeight - r.bottom;
+    list.style.minWidth = r.width + 'px';
+    list.style.left = Math.max(8, Math.min(r.left, window.innerWidth - r.width - 8)) + 'px';
+    list.style.top = (abajo >= alto + 12 || r.top < alto + 12 ? r.bottom + 6 : r.top - alto - 6) + 'px';
+    wrap.classList.add('open');
+    const sel = list.querySelector('.sel'); if (sel) sel.scrollIntoView({ block: 'nearest' });
+    document.addEventListener('click', fuera, true);
+    window.addEventListener('resize', cerrar);
+    window.addEventListener('scroll', cerrar, true);
+  }
+  btn.addEventListener('click', () => (list ? cerrar() : abrir()));
+  btn.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrar(); });
+  select.addEventListener('sync', sync);
+  sync();
+}
+
 /* ---------- Dropdown "Elegí qué estudiar" ---------- */
 document.getElementById('estudiar-select').addEventListener('change', (e) => {
   const view = e.target.value;
   if (!view) return;
   document.querySelector('.nav-item[data-view="' + view + '"]').click();
   e.target.selectedIndex = 0;
+  e.target.dispatchEvent(new Event('sync'));
 });
+enhanceSelect(document.getElementById('estudiar-select'));
 
 /* ---------- Mi calendario de esta semana (datos reales del calendario de Google) ---------- */
 const CALENDARIO_WEBHOOK_URL = "https://dominioservicion8nfacundo.cloud/webhook/valeria-mi-calendario-semanal";
@@ -2776,21 +2896,31 @@ const comunidadProponerBtn = document.getElementById('comunidad-proponer-btn');
     const hh = String(h).padStart(2, '0');
     comunidadHoraSelect.insertAdjacentHTML('beforeend', '<option value="' + hh + ':00">' + hh + ':00</option>');
   }
-  function hoyLocalISO() {
-    const n = new Date();
-    return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0');
+  function isoLocal(d) {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   }
-  comunidadHorarioInput.min = hoyLocalISO();
+  /* fecha: próximos 21 días */
+  const hoy = new Date();
+  comunidadHorarioInput.innerHTML = '<option value="">Fecha</option>';
+  for (let i = 0; i < 21; i++) {
+    const d = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() + i);
+    let txt = d.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' });
+    if (i === 0) txt = 'Hoy · ' + txt;
+    else if (i === 1) txt = 'Mañana · ' + txt;
+    comunidadHorarioInput.insertAdjacentHTML('beforeend', '<option value="' + isoLocal(d) + '">' + escapeHtml(txt) + '</option>');
+  }
   function deshabilitarHorasPasadas() {
-    const esHoy = comunidadHorarioInput.value === hoyLocalISO();
+    const esHoy = comunidadHorarioInput.value === isoLocal(new Date());
     const horaActual = new Date().getHours();
     [...comunidadHoraSelect.options].forEach((opt, i) => {
       opt.disabled = esHoy && i > 0 && (i - 1) <= horaActual;
     });
     if (comunidadHoraSelect.selectedOptions[0] && comunidadHoraSelect.selectedOptions[0].disabled) comunidadHoraSelect.value = '';
+    comunidadHoraSelect.dispatchEvent(new Event('sync'));
   }
   comunidadHorarioInput.addEventListener('change', deshabilitarHorasPasadas);
-  comunidadHorarioInput.addEventListener('focus', () => { comunidadHorarioInput.min = hoyLocalISO(); });
+  enhanceSelect(comunidadHorarioInput);
+  enhanceSelect(comunidadHoraSelect);
 })();
 const comunidadResultado = document.getElementById('comunidad-resultado');
 const comunidadClaseBtn = document.getElementById('comunidad-clase-btn');
@@ -2884,6 +3014,34 @@ document.querySelector('.nav-item[data-view="comunidad"]').addEventListener('cli
   }
 });
 
+const COMUNIDAD_EMOJIS = {
+  'Hobbies and Free Time': ['🎨', '🎸'],
+  'Travel and Tourism': ['✈️', '🌍'],
+  'Work and Employment': ['💼', '📈'],
+  'Food and Dining Out': ['🍕', '🍽️'],
+  'Media and Entertainment': ['🎬', '🎧'],
+  'Future Goals and Plans': ['🚀', '🎯']
+};
+
+/* Ilustración de dos personas conversando, con globos de diálogo del tema */
+function ilustracionComunidad(nombre) {
+  const [e1, e2] = COMUNIDAD_EMOJIS[nombre] || ['💬', '💬'];
+  return `<svg viewBox="0 0 200 110" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <g fill="#fff">
+      <rect x="14" y="6" width="58" height="34" rx="12" opacity=".95"/><path d="M34 40l6 10 6-10z" opacity=".95"/>
+      <rect x="128" y="14" width="58" height="34" rx="12" opacity=".95"/><path d="M156 48l6 10 6-10z" opacity=".95"/>
+    </g>
+    <text x="43" y="30" text-anchor="middle" font-size="20">${e1}</text>
+    <text x="157" y="38" text-anchor="middle" font-size="20">${e2}</text>
+    <g>
+      <circle cx="42" cy="68" r="12" fill="#FFE0C2"/><path d="M30 66a12 12 0 0 1 24 0c-6-5-18-5-24 0z" fill="#3b2a20"/>
+      <path d="M22 108v-14a20 20 0 0 1 40 0v14z" fill="#fff" opacity=".92"/>
+      <circle cx="158" cy="76" r="12" fill="#F2C9A0"/><path d="M146 73c2-9 22-9 24 0-6-3-18-3-24 0z" fill="#6b3f1d"/>
+      <path d="M138 108v-14a20 20 0 0 1 40 0v14z" fill="#0E3E82" opacity=".85"/>
+    </g>
+  </svg>`;
+}
+
 function renderGridComunidad() {
   comunidadGrid.innerHTML = '';
   COMUNIDAD_CATEGORIAS.forEach(nombre => {
@@ -2891,8 +3049,10 @@ function renderGridComunidad() {
     card.className = 'comunidad-card proximamente';
     card.dataset.nombre = nombre;
     card.innerHTML = `
+      <div class="comunidad-card-badge" hidden></div>
+      <div class="comunidad-card-ilu">${ilustracionComunidad(nombre)}</div>
       <div class="comunidad-card-nombre">${escapeHtml(nombre)}</div>
-      <div class="comunidad-card-cta">Próximamente</div>
+      <div class="comunidad-card-cta"><span class="cta-info">Todavía no está disponible</span><span class="cta-accion">Próximamente</span></div>
     `;
     comunidadGrid.appendChild(card);
   });
@@ -2936,6 +3096,15 @@ function activarCategoriaComunidad(tema) {
 }
 
 async function cargarEstadoBotonComunidad(cta, temaId) {
+  const badge = cta.parentElement.querySelector('.comunidad-card-badge');
+  const poner = (info, accion, foco, cantidad) => {
+    cta.innerHTML = '<span class="cta-info">' + escapeHtml(info) + '</span><span class="cta-accion">' + accion + '</span>';
+    cta.dataset.foco = foco;
+    badge.hidden = false;
+    badge.textContent = cantidad + ' 👤';
+    badge.classList.toggle('vacio', cantidad === 0);
+    badge.title = cantidad === 0 ? 'Nadie en espera' : cantidad + (cantidad === 1 ? ' persona en espera' : ' personas en espera');
+  };
   try {
     const res = await fetch(COMUNIDAD_BUSCAR_URL, {
       method: 'POST',
@@ -2944,11 +3113,22 @@ async function cargarEstadoBotonComunidad(cta, temaId) {
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
-    const hayAbiertas = (data.sesiones_abiertas || []).length > 0;
-    cta.textContent = hayAbiertas ? 'Participar' : 'Solicitar';
-    cta.dataset.foco = hayAbiertas ? 'sesiones' : 'horario';
+    const ahora = Date.now();
+    const abiertas = (data.sesiones_abiertas || [])
+      .filter(s => new Date(s.horario).getTime() > ahora)
+      .sort((x, y) => new Date(x.horario) - new Date(y.horario));
+    if (!abiertas.length) {
+      poner('No hay nadie todavía. ¡Sé el primero en proponer un horario!', 'Solicitar', 'horario', 0);
+    } else {
+      const personas = abiertas.reduce((t, s) => t + (Number(s.participantes) || 1), 0);
+      const prox = formatearHorarioComunidad(abiertas[0].horario);
+      const info = abiertas.length === 1
+        ? 'Hay alguien esperando para participar: ' + prox
+        : 'Hay ' + personas + ' personas esperando. La más próxima: ' + prox;
+      poner(info, 'Participar', 'sesiones', personas);
+    }
   } catch (err) {
-    cta.textContent = 'Participar';
+    cta.innerHTML = '<span class="cta-info">Entrá para ver los horarios disponibles</span><span class="cta-accion">Participar</span>';
     cta.dataset.foco = 'sesiones';
   }
 }
@@ -2956,8 +3136,7 @@ async function cargarEstadoBotonComunidad(cta, temaId) {
 function aplicarFocoComunidad(foco) {
   requestAnimationFrame(() => {
     if (foco === 'horario') {
-      comunidadHorarioInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      comunidadHorarioInput.focus();
+      comunidadHorarioInput.parentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
     } else if (foco === 'sesiones') {
       comunidadSesionesList.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
@@ -3134,6 +3313,8 @@ comunidadProponerBtn.addEventListener('click', async () => {
     );
     comunidadHorarioInput.value = '';
     comunidadHoraSelect.value = '';
+    comunidadHorarioInput.dispatchEvent(new Event('sync'));
+    comunidadHoraSelect.dispatchEvent(new Event('sync'));
     refrescarSesionesComunidad();
   } catch (err) {
     mostrarResultadoComunidad('No se pudo crear el horario (' + escapeHtml(err.message) + ').', true);
