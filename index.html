@@ -1126,14 +1126,6 @@
     text-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
     z-index: 1;
   }
-  .comunidad-card.con-foto {
-    background-size: cover;
-    background-position: center;
-    justify-content: flex-end;
-    min-height: 210px;
-    filter: none;
-  }
-  .comunidad-card.con-foto.proximamente { filter: grayscale(.6); }
   .comunidad-card-ilu { width: 100%; max-width: 190px; z-index: 1; }
   .comunidad-card-ilu svg { width: 100%; height: auto; display: block; }
   .comunidad-card-badge {
@@ -3047,14 +3039,6 @@ document.querySelector('.nav-item[data-view="comunidad"]').addEventListener('cli
   }
 });
 
-/* Fotos de cada tema; los temas sin foto usan la ilustración de respaldo */
-const COMUNIDAD_FOTOS = {
-  'Hobbies and Free Time': 'imagenes-comunidad/hobbies.jpg',
-  'Travel and Tourism': 'imagenes-comunidad/travel.jpg',
-  'Work and Employment': 'imagenes-comunidad/work.jpg',
-  'Food and Dining Out': 'imagenes-comunidad/food.jpg'
-};
-
 const COMUNIDAD_EMOJIS = {
   'Hobbies and Free Time': ['🎨', '🎸'],
   'Travel and Tourism': ['✈️', '🌍'],
@@ -3089,14 +3073,9 @@ function renderGridComunidad() {
     const card = document.createElement('div');
     card.className = 'comunidad-card proximamente';
     card.dataset.nombre = nombre;
-    const foto = COMUNIDAD_FOTOS[nombre];
-    if (foto) {
-      card.classList.add('con-foto');
-      card.style.backgroundImage = 'linear-gradient(to top, rgba(10, 35, 80, .78) 0%, rgba(10, 35, 80, .12) 55%, rgba(10, 35, 80, 0) 100%), url("' + foto + '")';
-    }
     card.innerHTML = `
       <div class="comunidad-card-badge" hidden></div>
-      ${foto ? '' : '<div class="comunidad-card-ilu">' + ilustracionComunidad(nombre) + '</div>'}
+      <div class="comunidad-card-ilu">${ilustracionComunidad(nombre)}</div>
       <div class="comunidad-card-nombre">${escapeHtml(nombre)}</div>
       <div class="comunidad-card-cta"><span class="cta-info">Todavía no está disponible</span><span class="cta-accion">Próximamente</span></div>
     `;
