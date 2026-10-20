@@ -1723,6 +1723,40 @@ function tokenAcceso() {
   return s ? s.access_token : null;
 }
 
+// El access_token de Supabase dura 1 hora: con el refresh_token se pide uno nuevo.
+async function refrescarSesion() {
+  const s = getSesion();
+  if (!s || !s.refresh_token) return false;
+  try {
+    const res = await fetch(SUPABASE_URL + '/auth/v1/token?grant_type=refresh_token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY },
+      body: JSON.stringify({ refresh_token: s.refresh_token })
+    });
+    if (!res.ok) return false;
+    guardarSesion(await res.json());
+    return true;
+  } catch (e) { return false; }
+}
+
+// POST a un webhook de n8n con el token del alumno; si responde 401 renueva el token y reintenta una vez.
+async function postConToken(url, payload) {
+  const enviar = () => fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...payload, access_token: tokenAcceso() })
+  });
+  let res = await enviar();
+  if (res.status === 401) {
+    if (await refrescarSesion()) {
+      res = await enviar();
+    } else {
+      cerrarSesion();
+    }
+  }
+  return res;
+}
+
 function mostrarApp() {
   document.getElementById('login-gate').classList.add('hidden');
   document.getElementById('app-shell').classList.remove('hidden');
@@ -1841,11 +1875,7 @@ let progresoSemanaCache = null; // { tipos: {'vocabulario:Work and employment': 
 
 async function cargarProgresoSemana() {
   try {
-    const res = await fetch(PROGRESO_WEBHOOK_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ accion: 'listar', access_token: tokenAcceso() })
-    });
+    const res = await postConToken(PROGRESO_WEBHOOK_URL, { accion: 'listar' });
     const data = await res.json();
     progresoSemanaCache = data;
     actualizarPuntosSemana(data.puntos_semana_total || 0);
@@ -1870,11 +1900,7 @@ function estaBloqueadaEstaSemana(tipo, tema) {
 // para que sobreviva entre dispositivos y sea la fuente de verdad del bloqueo semanal.
 async function otorgarPuntosActividad(tipo, tema, puntos = PUNTOS_POR_ACTIVIDAD) {
   if (estaBloqueadaEstaSemana(tipo, tema)) return false;
-  const res = await fetch(PROGRESO_WEBHOOK_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ accion: 'otorgar', access_token: tokenAcceso(), tipo, tema, puntos })
-  });
+  const res = await postConToken(PROGRESO_WEBHOOK_URL, { accion: 'otorgar', tipo, tema, puntos });
   const data = await res.json();
   if (!progresoSemanaCache) progresoSemanaCache = { tipos: {}, puntos_semana_total: 0 };
   if (data.otorgado) progresoSemanaCache.tipos[tipo + ':' + tema] = puntos;
@@ -2166,11 +2192,7 @@ async function buscarVocabulario(categoria) {
   vocabDetailResultado.innerHTML = '<div class="spinner"></div>';
   resetVocabState();
   try {
-    const res = await fetch(VOCAB_WEBHOOK_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ categoria, access_token: tokenAcceso() })
-    });
+    const res = await postConToken(VOCAB_WEBHOOK_URL, { categoria });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     const palabras = data.palabras || [];
