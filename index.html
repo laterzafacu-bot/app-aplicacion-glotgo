@@ -1895,7 +1895,11 @@ async function otorgarPuntosActividad(tipo, tema, puntos = PUNTOS_POR_ACTIVIDAD)
   const res = await postConToken(PROGRESO_WEBHOOK_URL, { accion: 'otorgar', tipo, tema, puntos });
   const data = await res.json();
   if (!progresoSemanaCache) progresoSemanaCache = { tipos: {}, puntos_semana_total: 0 };
-  if (data.otorgado) progresoSemanaCache.tipos[tipo + ':' + tema] = puntos;
+  if (data.otorgado) {
+    progresoSemanaCache.tipos[tipo + ':' + tema] = puntos;
+    aplicarBloqueosVocabulario();
+    aplicarBloqueosLectura();
+  }
   progresoSemanaCache.puntos_semana_total = data.puntos_semana_total;
   actualizarPuntosSemana(data.puntos_semana_total);
   if (data.puntos_mes_total !== undefined) {
@@ -2136,7 +2140,10 @@ VOCAB_CATEGORIAS.forEach(cat => {
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
     </div>
   `;
-  card.addEventListener('click', () => buscarVocabulario(cat.title));
+  card.addEventListener('click', () => {
+    if (estaBloqueadaEstaSemana('vocabulario', cat.title)) return;
+    buscarVocabulario(cat.title);
+  });
   vocabGrid.appendChild(card);
 });
 
@@ -2728,6 +2735,7 @@ function renderCategoriasLectura() {
       <div class="lectura-card-bloqueo-msg" hidden>Ya hecho esta semana — volvé el lunes</div>
     `;
     card.addEventListener('click', () => {
+      if (estaBloqueadaEstaSemana('lectura', categoria)) return;
       lecturaSelector.hidden = true;
       lecturaDetail.hidden = false;
       buscarLectura(categoria);
