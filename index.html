@@ -1895,7 +1895,9 @@ async function otorgarPuntosActividad(tipo, tema, puntos = PUNTOS_POR_ACTIVIDAD)
   const res = await postConToken(PROGRESO_WEBHOOK_URL, { accion: 'otorgar', tipo, tema, puntos });
   const data = await res.json();
   if (!progresoSemanaCache) progresoSemanaCache = { tipos: {}, puntos_semana_total: 0 };
-  if (data.otorgado) {
+  // Ya sea que se otorgó recién o que el servidor dijo "ya estaba otorgado", la actividad
+  // queda hecha esta semana: se bloquea la tarjeta sin depender de haber cargado el listado.
+  if (data.puntos_semana_total !== undefined) {
     progresoSemanaCache.tipos[tipo + ':' + tema] = puntos;
     aplicarBloqueosVocabulario();
     aplicarBloqueosLectura();
