@@ -2185,11 +2185,11 @@ document.getElementById('vocab-back').addEventListener('click', () => {
 async function buscarVocabulario(categoria) {
   vocabGrid.hidden = true;
   vocabDetail.hidden = false;
+  resetVocabState();
   vocabCategoriaActiva = categoria;
   vocabDetailTitle.textContent = categoria;
   vocabDetailResultado.className = 'resultado vacio loading';
   vocabDetailResultado.innerHTML = '<div class="spinner"></div>';
-  resetVocabState();
   try {
     const res = await postConToken(VOCAB_WEBHOOK_URL, { categoria });
     if (!res.ok) throw new Error('HTTP ' + res.status);
