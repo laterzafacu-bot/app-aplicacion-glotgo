@@ -508,18 +508,24 @@
   .vocab-card-bloqueada, .lectura-card-bloqueada {
     opacity: .55;
   }
-  .vocab-card-bloqueada .vocab-bar, .lectura-card-bloqueada .lectura-card-bloqueo-msg {
+  .vocab-card-bloqueada .vocab-bar {
     background: #8a98a8;
   }
+  /* Va encima de la foto de la tarjeta (que es absolute y tapaba el mensaje). */
   .lectura-card-bloqueo-msg {
-    font-size: 11px;
-    font-weight: 600;
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    z-index: 2;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.3;
+    text-align: center;
     color: #fff;
-    background: #8a98a8;
+    background: #4a5a6b;
     border-radius: 6px;
-    padding: 4px 8px;
-    margin-top: 6px;
-    display: inline-block;
+    padding: 6px 8px;
   }
   .lectura-card-bloqueo-msg[hidden] {
     display: none;
