@@ -613,19 +613,12 @@
   }
   .vocab-word-head { margin-bottom: 12px; }
   .vocab-word-card strong { color: var(--azul-oscuro); font-size: 17px; }
-  .vocab-word-card .fonetica { color: var(--gris); font-size: 13px; }
   .vocab-word-card .definicion {
     font-size: 14.5px;
     line-height: 1.6;
     margin-bottom: 16px;
     padding-bottom: 16px;
     border-bottom: 1px dashed var(--border);
-  }
-  .vocab-word-card .ejemplo {
-    font-size: 14.5px;
-    font-style: italic;
-    line-height: 1.55;
-    margin-bottom: 16px;
   }
   .vocab-word-card .traduccion { font-size: 13px; color: var(--gris); }
 
@@ -657,27 +650,15 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    max-width: 420px;
+    max-width: 640px;
     width: 100%;
     overflow: hidden;
   }
   .vocab-carousel-card {
     width: 100%;
-    max-width: 380px;
-    min-height: 320px;
+    max-width: 600px;
+    min-height: 240px;
     box-shadow: 0 10px 24px rgba(14, 62, 130, 0.12);
-  }
-  .vocab-carousel-peek {
-    flex-shrink: 0;
-    width: 18px;
-    align-self: stretch;
-    background: var(--blanco);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    opacity: .5;
-    transform: scale(.92);
-    pointer-events: none;
-    overflow: hidden;
   }
   .vocab-carousel-contador {
     text-align: center;
@@ -2197,9 +2178,6 @@ async function buscarVocabulario(categoria) {
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     const palabras = data.palabras || [];
-    if (data.total_tandas > 1) {
-      vocabDetailTitle.textContent = categoria + ' (tanda ' + data.tanda + ' de ' + data.total_tandas + ')';
-    }
     if (!palabras.length) {
       vocabDetailResultado.className = 'resultado vacio';
       vocabDetailResultado.textContent = 'Todavía no hay vocabulario cargado para "' + categoria + '".';
@@ -2211,9 +2189,7 @@ async function buscarVocabulario(categoria) {
       <div class="vocab-carousel" id="vocab-carousel">
         <button type="button" class="vocab-carousel-arrow" id="vocab-carousel-prev" aria-label="Palabra anterior">&lsaquo;</button>
         <div class="vocab-carousel-viewport">
-          <div class="vocab-carousel-peek vocab-carousel-peek-prev" id="vocab-carousel-peek-prev"></div>
           <div class="vocab-word-card vocab-carousel-card" id="vocab-carousel-card"></div>
-          <div class="vocab-carousel-peek vocab-carousel-peek-next" id="vocab-carousel-peek-next"></div>
         </div>
         <button type="button" class="vocab-carousel-arrow" id="vocab-carousel-next" aria-label="Palabra siguiente">&rsaquo;</button>
       </div>
@@ -2243,9 +2219,8 @@ async function buscarVocabulario(categoria) {
 
 function vocabWordCardHtml(p) {
   return `
-    <div class="vocab-word-head"><strong>${escapeHtml(p.palabra || '')}</strong>${p.fonetica ? ` <span class="fonetica">${escapeHtml(p.fonetica)}</span>` : ''}</div>
+    <div class="vocab-word-head"><strong>${escapeHtml(p.palabra || '')}</strong></div>
     <div class="definicion">${escapeHtml(p.definicion || '')}</div>
-    <div class="ejemplo">${escapeHtml(p.ejemplo || '')}</div>
     <div class="traduccion">Traducción: ${escapeHtml(p.traduccion || '')}</div>
   `;
 }
@@ -2268,11 +2243,6 @@ function mostrarPalabraCarousel(idx) {
   document.getElementById('vocab-carousel-contador').textContent = `${vocabCarouselIndex + 1} / ${vocabPalabras.length}`;
   document.getElementById('vocab-carousel-prev').disabled = vocabCarouselIndex === 0;
   document.getElementById('vocab-carousel-next').disabled = vocabCarouselIndex === max;
-
-  const anterior = vocabPalabras[vocabCarouselIndex - 1];
-  const siguiente = vocabPalabras[vocabCarouselIndex + 1];
-  document.getElementById('vocab-carousel-peek-prev').textContent = anterior ? (anterior.palabra || '') : '';
-  document.getElementById('vocab-carousel-peek-next').textContent = siguiente ? (siguiente.palabra || '') : '';
 }
 
 function construirRegexPalabra(texto) {
