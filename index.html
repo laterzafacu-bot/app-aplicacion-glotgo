@@ -692,6 +692,12 @@
     cursor: grab;
   }
   .vocab-chip.dragging { opacity: .4; }
+  .vocab-chip.seleccionada {
+    background: var(--celeste);
+    color: var(--blanco);
+    box-shadow: 0 0 0 3px var(--celeste-bg);
+  }
+  .vocab-quiz-wrap.con-seleccion .vocab-blank { cursor: pointer; border-bottom-style: solid; }
   .vocab-quiz-oraciones {
     padding-left: 22px;
     display: flex;
@@ -1773,12 +1779,6 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
 
 document.getElementById('logout-btn').addEventListener('click', cerrarSesion);
 
-if (getSesion()) {
-  mostrarApp();
-} else {
-  mostrarLogin();
-}
-
 /* ---------- Navegación entre vistas ---------- */
 const navItems = document.querySelectorAll('.nav-item');
 const views = document.querySelectorAll('.view');
@@ -2280,6 +2280,7 @@ function construirOracionesQuiz(palabras) {
 function iniciarQuizVocabulario() {
   vocabQuizItems = construirOracionesQuiz(vocabPalabras);
   vocabQuizRevisado = false;
+  limpiarSeleccionQuiz();
 
   const wrap = document.getElementById('vocab-quiz-wrap');
   const oracionesEl = document.getElementById('vocab-quiz-oraciones');
@@ -2329,6 +2330,13 @@ function iniciarQuizVocabulario() {
   document.getElementById('vocab-listo-btn').hidden = true;
 }
 
+function limpiarSeleccionQuiz() {
+  const wrap = document.getElementById('vocab-quiz-wrap');
+  if (!wrap) return;
+  wrap.classList.remove('con-seleccion');
+  wrap.querySelectorAll('.vocab-chip.seleccionada').forEach(c => c.classList.remove('seleccionada'));
+}
+
 function colocarFicha(chip, destino) {
   const bankEl = document.getElementById('vocab-quiz-bank');
   const blankAnterior = chip.closest('.vocab-blank');
@@ -2374,6 +2382,7 @@ async function revisarQuizVocabulario() {
     mensajePuntos;
 
   vocabQuizRevisado = true;
+  limpiarSeleccionQuiz();
   document.getElementById('vocab-quiz-check-btn').disabled = true;
   document.getElementById('vocab-quiz-reintentar').hidden = false;
 }
@@ -2408,6 +2417,31 @@ function initVocabQuizTriggers() {
   wrap.addEventListener('dragleave', (e) => {
     const destino = e.target.closest('.vocab-blank');
     if (destino) destino.classList.remove('drag-over');
+  });
+
+  // Alternativa al arrastre (pensada para el celular): tocar una ficha la selecciona y
+  // después tocar un espacio (o el banco) la coloca ahí. La selección se mantiene al hacer scroll.
+  wrap.addEventListener('click', (e) => {
+    if (vocabQuizRevisado) return;
+    const chip = e.target.closest('.vocab-chip');
+    const blank = e.target.closest('.vocab-blank');
+    const banco = e.target.closest('#vocab-quiz-bank');
+    const sel = wrap.querySelector('.vocab-chip.seleccionada');
+
+    if (chip) {
+      if (sel && sel !== chip) {
+        // Hay una ficha elegida y toco otra: si esa está en un espacio, la reemplaza ahí.
+        if (blank) { colocarFicha(sel, blank); limpiarSeleccionQuiz(); }
+        else { sel.classList.remove('seleccionada'); chip.classList.add('seleccionada'); wrap.classList.add('con-seleccion'); }
+        return;
+      }
+      const activar = sel !== chip;
+      limpiarSeleccionQuiz();
+      if (activar) { chip.classList.add('seleccionada'); wrap.classList.add('con-seleccion'); }
+      return;
+    }
+    if (sel && blank) { colocarFicha(sel, blank); limpiarSeleccionQuiz(); return; }
+    if (sel && banco) { colocarFicha(sel, banco); limpiarSeleccionQuiz(); }
   });
 
   wrap.addEventListener('drop', (e) => {
@@ -3328,6 +3362,16 @@ comunidadProponerBtn.addEventListener('click', async () => {
     comunidadProponerBtn.textContent = 'Proponer este horario';
   }
 });
+
+/* ---------- Arranque ---------- */
+// Va al final del script a propósito: mostrarApp() llama a cargarProgresoSemana(), que usa
+// constantes (PROGRESO_WEBHOOK_URL, etc.) declaradas más arriba. Si se ejecuta antes de que
+// existan, falla en silencio y el alumno ve 0 puntos y las actividades desbloqueadas.
+if (getSesion()) {
+  mostrarApp();
+} else {
+  mostrarLogin();
+}
 </script>
 </body>
 </html>
