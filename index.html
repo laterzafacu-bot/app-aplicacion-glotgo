@@ -1415,6 +1415,18 @@
     .feedback-emoji { font-size: 22px; }
   }
 
+  /* Celular/táctil: la foto está siempre visible, así que oscurezco más para que el texto blanco se lea */
+  @media (hover: none) {
+    .vocab-photo::after {
+      background: linear-gradient(180deg, rgba(0,0,0,0.30) 0%, rgba(0,0,0,0.45) 40%, rgba(0,0,0,0.82) 100%);
+    }
+    .vocab-photo-title { font-size: 17px; text-shadow: 0 1px 6px rgba(0,0,0,0.7); }
+    .lectura-card-foto::before {
+      background: linear-gradient(to top, rgba(14,62,130,0.95) 0%, rgba(14,62,130,0.65) 45%, rgba(14,62,130,0.40) 100%);
+    }
+    .lectura-card-foto span { font-size: 18px; text-shadow: 0 1px 6px rgba(0,0,0,0.7); }
+  }
+
   /* ---------- Avatar (pájaro) ---------- */
   .hero-saludo { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
   .avatar-hero { height: 130px; width: auto; flex-shrink: 0; }
@@ -1643,8 +1655,13 @@
     <section class="view" id="view-comunidad">
       <div class="puntos-badge-flotante"><span class="num">+50</span><span class="label">puntos</span></div>
       <div class="comunidad-selector" id="comunidad-selector">
-        <h1 class="greeting">Conversaciones en comunidad</h1>
-        <p class="greeting-sub">Practicá inglés hablado con otro alumno. Elegí un tema, sumate a un horario que ya propusieron o proponé el tuyo — la invitación de Calendar con el link de Meet les llega sola a los dos, sin que nadie más tenga que hacer nada.</p>
+        <div class="hero-saludo">
+          <div>
+            <h1 class="greeting">Conversaciones en comunidad</h1>
+            <p class="greeting-sub">Practicá inglés hablado con otro alumno. Elegí un tema, sumate a un horario que ya propusieron o proponé el tuyo — la invitación de Calendar con el link de Meet les llega sola a los dos, sin que nadie más tenga que hacer nada.</p>
+          </div>
+          <img class="avatar-hero" src="img/avatar/graduado.png" alt="" aria-hidden="true">
+        </div>
 
         <div class="tema-grid" id="comunidad-grid"></div>
       </div>
