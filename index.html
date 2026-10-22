@@ -1436,7 +1436,9 @@
   .avatar-fin { display: block; height: 130px; width: auto; margin: 0 auto 6px; animation: avatar-pop .45s cubic-bezier(.3, 1.5, .5, 1); }
   @keyframes avatar-pop { from { transform: scale(.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
   @media (prefers-reduced-motion: reduce) { .avatar-msg, .avatar-fin { animation: none; } }
-  @media (max-width: 560px) { .avatar-hero { height: 80px; } .avatar-msg { height: 64px; } }
+  /* Pájaro apoyado sobre el recuadro del título (no al costado, para no ocupar ancho) */
+  .avatar-sobre-titulo { display: block; position: relative; z-index: 1; height: 104px; width: auto; margin: 0 0 -16px 22px; }
+  @media (max-width: 560px) { .avatar-sobre-titulo { height: 84px; margin-left: 14px; } .avatar-hero { height: 80px; } .avatar-msg { height: 64px; } }
 </style>
 </head>
 <body class="sidebar-collapsed">
@@ -1655,13 +1657,9 @@
     <section class="view" id="view-comunidad">
       <div class="puntos-badge-flotante"><span class="num">+50</span><span class="label">puntos</span></div>
       <div class="comunidad-selector" id="comunidad-selector">
-        <div class="hero-saludo">
-          <div>
-            <h1 class="greeting">Conversaciones en comunidad</h1>
-            <p class="greeting-sub">Practicá inglés hablado con otro alumno. Elegí un tema, sumate a un horario que ya propusieron o proponé el tuyo — la invitación de Calendar con el link de Meet les llega sola a los dos, sin que nadie más tenga que hacer nada.</p>
-          </div>
-          <img class="avatar-hero" src="img/avatar/graduado.png" alt="" aria-hidden="true">
-        </div>
+        <img class="avatar-sobre-titulo" src="img/avatar/graduado.png" alt="" aria-hidden="true">
+        <h1 class="greeting">Conversaciones en comunidad</h1>
+        <p class="greeting-sub">Practicá inglés hablado con otro alumno. Elegí un tema, sumate a un horario que ya propusieron o proponé el tuyo — la invitación de Calendar con el link de Meet les llega sola a los dos, sin que nadie más tenga que hacer nada.</p>
 
         <div class="tema-grid" id="comunidad-grid"></div>
       </div>
