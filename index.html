@@ -978,6 +978,9 @@
   }
   .opcion-lectura:hover:not(:disabled) { border-color: var(--celeste); }
   .opcion-lectura:disabled { cursor: default; }
+  .opcion-lectura.elegida { background: var(--celeste-bg); border-color: var(--celeste); font-weight: 600; }
+  #lectura-revisar { margin-top: 18px; }
+  #lectura-revisar:disabled { opacity: .5; cursor: not-allowed; }
   .opcion-lectura.correcta { background: #e6f6ea; border-color: #2f9e51; color: #1e6b37; }
   .opcion-lectura.incorrecta { background: #fdecec; border-color: #c0392b; color: #a12727; }
 
@@ -2842,15 +2845,27 @@ function textoAParrafosHtml(texto) {
     .join('');
 }
 
+function mezclarIndices(n) {
+  const arr = Array.from({ length: n }, (_, i) => i);
+  for (let i = n - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 function renderLectura(data) {
   const preguntas = Array.isArray(data.preguntas) ? data.preguntas : [];
+  // Orden mezclado por pregunta: la correcta no queda siempre primera.
+  // Se saca el prefijo "A." del texto porque al mezclar dejaría de coincidir.
+  const ordenes = preguntas.map(p => mezclarIndices((Array.isArray(p.opciones) ? p.opciones : []).length));
   const preguntasHtml = preguntas.map((p, idx) => {
     const opciones = Array.isArray(p.opciones) ? p.opciones : [];
     return `
       <div class="pregunta-lectura" data-pregunta="${idx}">
         <div class="enunciado">${idx + 1}. ${escapeHtml(p.pregunta || '')}</div>
         <div class="opciones-lectura">
-          ${opciones.map((o, oIdx) => `<button type="button" class="opcion-lectura" data-idx="${oIdx}">${escapeHtml(o)}</button>`).join('')}
+          ${ordenes[idx].map(oIdx => `<button type="button" class="opcion-lectura" data-idx="${oIdx}">${escapeHtml(String(opciones[oIdx]).replace(/^[A-Da-d]\s*[.):-]\s*/, ''))}</button>`).join('')}
         </div>
       </div>
     `;
@@ -2866,6 +2881,7 @@ function renderLectura(data) {
       : (preguntas.length ? '<button type="button" class="lectura-comenzar" id="lectura-comenzar">Comenzar quiz</button>' : '')}
     <div class="lectura-quiz" id="lectura-quiz" hidden>
       <div class="preguntas-lectura">${preguntasHtml}</div>
+      <button type="button" class="lectura-comenzar" id="lectura-revisar" disabled>Revisar</button>
       <div class="lectura-quiz-resumen" id="lectura-quiz-resumen"></div>
     </div>
   `, 'mapa');
@@ -2883,39 +2899,49 @@ function renderLectura(data) {
   }
 
   const resumenEl = lecturaResultado.querySelector('#lectura-quiz-resumen');
-  const estado = { respondidas: 0, correctas: 0 };
+  const revisarBtn = lecturaResultado.querySelector('#lectura-revisar');
+  const seleccion = {}; // idx de pregunta -> idx original de la opción elegida
+  let revisado = false;
 
   preguntas.forEach((p, idx) => {
-    const opciones = Array.isArray(p.opciones) ? p.opciones : [];
     const preguntaEl = lecturaResultado.querySelector('.pregunta-lectura[data-pregunta="' + idx + '"]');
     if (!preguntaEl) return;
-    const botones = preguntaEl.querySelectorAll('.opcion-lectura');
-    botones.forEach((btn, bIdx) => {
-      btn.addEventListener('click', async () => {
-        const acerto = esOpcionCorrecta(opciones[bIdx], p.respuesta, bIdx);
-        botones.forEach((b, i) => {
-          b.disabled = true;
-          if (esOpcionCorrecta(opciones[i], p.respuesta, i)) {
-            b.classList.add('correcta');
-          } else if (i === bIdx) {
-            b.classList.add('incorrecta');
-          }
-        });
-        estado.respondidas++;
-        if (acerto) estado.correctas++;
-        if (estado.respondidas === preguntas.length && resumenEl) {
-          const minimoParaPuntos = Math.ceil(preguntas.length * 0.75);
-          if (estado.correctas >= minimoParaPuntos) {
-            const sumo = await otorgarPuntosActividad('lectura', data.tema);
-            mostrarResumenConAvatar(resumenEl, 'celebra', sumo
-              ? `¡Bien! ${estado.correctas}/${preguntas.length} correctas — sumaste ${PUNTOS_POR_ACTIVIDAD} puntos a tu semana.`
-              : `¡Bien! ${estado.correctas}/${preguntas.length} correctas — esta categoría ya te sumó puntos esta semana.`);
-          } else {
-            mostrarResumenConAvatar(resumenEl, 'triste', `${estado.correctas}/${preguntas.length} correctas. Necesitás al menos ${minimoParaPuntos} para sumar los ${PUNTOS_POR_ACTIVIDAD} puntos — probá de nuevo.`);
-          }
-        }
+    preguntaEl.querySelectorAll('.opcion-lectura').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (revisado) return;
+        seleccion[idx] = Number(btn.dataset.idx);
+        preguntaEl.querySelectorAll('.opcion-lectura').forEach(b => b.classList.toggle('elegida', b === btn));
+        revisarBtn.disabled = Object.keys(seleccion).length < preguntas.length;
       });
     });
+  });
+
+  revisarBtn.addEventListener('click', async () => {
+    if (revisado || Object.keys(seleccion).length < preguntas.length) return;
+    revisado = true;
+    revisarBtn.hidden = true;
+    let correctas = 0;
+    preguntas.forEach((p, idx) => {
+      const opciones = Array.isArray(p.opciones) ? p.opciones : [];
+      const preguntaEl = lecturaResultado.querySelector('.pregunta-lectura[data-pregunta="' + idx + '"]');
+      preguntaEl.querySelectorAll('.opcion-lectura').forEach(b => {
+        const i = Number(b.dataset.idx);
+        b.disabled = true;
+        b.classList.remove('elegida');
+        if (esOpcionCorrecta(opciones[i], p.respuesta, i)) b.classList.add('correcta');
+        else if (i === seleccion[idx]) b.classList.add('incorrecta');
+      });
+      if (esOpcionCorrecta(opciones[seleccion[idx]], p.respuesta, seleccion[idx])) correctas++;
+    });
+    const minimoParaPuntos = Math.ceil(preguntas.length * 0.75);
+    if (correctas >= minimoParaPuntos) {
+      const sumo = await otorgarPuntosActividad('lectura', data.tema);
+      mostrarResumenConAvatar(resumenEl, 'celebra', sumo
+        ? `¡Bien! ${correctas}/${preguntas.length} correctas — sumaste ${PUNTOS_POR_ACTIVIDAD} puntos a tu semana.`
+        : `¡Bien! ${correctas}/${preguntas.length} correctas — esta categoría ya te sumó puntos esta semana.`);
+    } else {
+      mostrarResumenConAvatar(resumenEl, 'triste', `${correctas}/${preguntas.length} correctas. Necesitás al menos ${minimoParaPuntos} para sumar los ${PUNTOS_POR_ACTIVIDAD} puntos — probá de nuevo.`);
+    }
   });
 }
 
