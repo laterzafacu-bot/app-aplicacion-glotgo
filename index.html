@@ -2139,63 +2139,58 @@ const VOCAB_CATEGORIAS = [
 function avatarImg(pose) {
   return '<img class="avatar-msg" src="img/avatar/' + pose + '.png" alt="" aria-hidden="true">';
 }
-/* ---------- Efectos de sonido (Web Audio, sin archivos) ---------- */
+/* ---------- Efectos de sonido (generados por código, sin archivos) ---------- */
 let sonidoActivo = true;
 try { sonidoActivo = localStorage.getItem('glotgo-sonido') !== 'off'; } catch (e) {}
-let audioCtx = null;
-
-function tono(freq, inicio, dur, tipo, vol) {
-  const t0 = audioCtx.currentTime + inicio;
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.type = tipo || 'sine';
-  osc.frequency.setValueAtTime(freq, t0);
-  gain.gain.setValueAtTime(0.0001, t0);
-  gain.gain.exponentialRampToValueAtTime(vol || 0.15, t0 + 0.01);
-  gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-  osc.connect(gain).connect(audioCtx.destination);
-  osc.start(t0);
-  osc.stop(t0 + dur + 0.02);
+// Se generan WAV en memoria y se reproducen con <audio>: en celulares es más
+// confiable que Web Audio (no queda suspendido y respeta el volumen multimedia).
+function crearWav(notas) {
+  const sr = 22050;
+  const total = Math.max(...notas.map(n => n.ini + n.dur));
+  const datos = new Float32Array(Math.ceil(total * sr) + 1);
+  notas.forEach(n => {
+    const i0 = Math.floor(n.ini * sr), len = Math.floor(n.dur * sr);
+    for (let i = 0; i < len; i++) {
+      const t = i / sr;
+      const fase = (t * n.freq) % 1;
+      const onda = n.tipo === 'cuadrada' ? (fase < 0.5 ? 1 : -1) * 0.6 : Math.sin(2 * Math.PI * fase);
+      const env = Math.min(1, i / (sr * 0.005)) * Math.pow(1 - i / len, 1.5);
+      datos[i0 + i] += onda * env * n.vol;
+    }
+  });
+  const buf = new ArrayBuffer(44 + datos.length * 2);
+  const v = new DataView(buf);
+  const txt = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+  txt(0, 'RIFF'); v.setUint32(4, 36 + datos.length * 2, true); txt(8, 'WAVE'); txt(12, 'fmt ');
+  v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  txt(36, 'data'); v.setUint32(40, datos.length * 2, true);
+  for (let i = 0; i < datos.length; i++) v.setInt16(44 + i * 2, Math.max(-1, Math.min(1, datos[i])) * 32767, true);
+  return URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
 }
+
+const sonidos = {};
+try {
+  sonidos.click = new Audio(crearWav([{ freq: 880, ini: 0, dur: 0.1, vol: 0.8 }]));
+  sonidos.acierto = new Audio(crearWav([
+    { freq: 523, ini: 0, dur: 0.18, vol: 0.8 },
+    { freq: 659, ini: 0.12, dur: 0.18, vol: 0.8 },
+    { freq: 784, ini: 0.24, dur: 0.35, vol: 0.8 }]));
+  sonidos.error = new Audio(crearWav([
+    { freq: 260, ini: 0, dur: 0.2, vol: 0.7, tipo: 'cuadrada' },
+    { freq: 196, ini: 0.16, dur: 0.35, vol: 0.7, tipo: 'cuadrada' }]));
+  Object.values(sonidos).forEach(a => { a.preload = 'auto'; });
+} catch (e) {}
 
 function reproducirSonido(tipo) {
-  if (!sonidoActivo) return;
+  if (!sonidoActivo || !sonidos[tipo]) return;
   try {
-    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state !== 'running') {
-      // En celulares el contexto arranca suspendido: hay que esperar el resume antes de agendar los tonos.
-      audioCtx.resume().then(() => { if (audioCtx.state === 'running') tocarSonido(tipo); }).catch(() => {});
-      return;
-    }
-    tocarSonido(tipo);
+    const a = sonidos[tipo];
+    a.currentTime = 0;
+    const p = a.play();
+    if (p && p.catch) p.catch(() => {});
   } catch (e) {}
 }
-
-function tocarSonido(tipo) {
-  try {
-    if (tipo === 'click') {
-      tono(880, 0, 0.1, 'triangle', 0.35);
-    } else if (tipo === 'acierto') {
-      tono(523, 0, 0.15, 'triangle', 0.4);
-      tono(659, 0.12, 0.15, 'triangle', 0.4);
-      tono(784, 0.24, 0.3, 'triangle', 0.4);
-    } else if (tipo === 'error') {
-      tono(260, 0, 0.18, 'sawtooth', 0.25);
-      tono(196, 0.16, 0.3, 'sawtooth', 0.25);
-    }
-  } catch (e) {}
-}
-
-// Desbloquea el audio en el primer toque (requisito de iOS/Android).
-['touchstart', 'pointerdown'].forEach(ev => document.addEventListener(ev, function desbloquear() {
-  try {
-    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-    audioCtx.resume();
-    const b = audioCtx.createBuffer(1, 1, 22050);
-    const s = audioCtx.createBufferSource();
-    s.buffer = b; s.connect(audioCtx.destination); s.start(0);
-  } catch (e) {}
-}, { once: true, passive: true }));
 
 document.addEventListener('click', e => {
   if (e.target.closest('#sonido-btn')) return;
