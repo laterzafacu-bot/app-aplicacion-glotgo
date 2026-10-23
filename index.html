@@ -2174,14 +2174,14 @@ function reproducirSonido(tipo) {
 function tocarSonido(tipo) {
   try {
     if (tipo === 'click') {
-      tono(660, 0, 0.07, 'sine', 0.08);
+      tono(880, 0, 0.1, 'triangle', 0.35);
     } else if (tipo === 'acierto') {
-      tono(523, 0, 0.15, 'triangle', 0.16);
-      tono(659, 0.12, 0.15, 'triangle', 0.16);
-      tono(784, 0.24, 0.3, 'triangle', 0.16);
+      tono(523, 0, 0.15, 'triangle', 0.4);
+      tono(659, 0.12, 0.15, 'triangle', 0.4);
+      tono(784, 0.24, 0.3, 'triangle', 0.4);
     } else if (tipo === 'error') {
-      tono(260, 0, 0.18, 'sawtooth', 0.09);
-      tono(196, 0.16, 0.3, 'sawtooth', 0.09);
+      tono(260, 0, 0.18, 'sawtooth', 0.25);
+      tono(196, 0.16, 0.3, 'sawtooth', 0.25);
     }
   } catch (e) {}
 }
