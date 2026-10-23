@@ -2162,7 +2162,17 @@ function reproducirSonido(tipo) {
   if (!sonidoActivo) return;
   try {
     audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
+    if (audioCtx.state !== 'running') {
+      // En celulares el contexto arranca suspendido: hay que esperar el resume antes de agendar los tonos.
+      audioCtx.resume().then(() => { if (audioCtx.state === 'running') tocarSonido(tipo); }).catch(() => {});
+      return;
+    }
+    tocarSonido(tipo);
+  } catch (e) {}
+}
+
+function tocarSonido(tipo) {
+  try {
     if (tipo === 'click') {
       tono(660, 0, 0.07, 'sine', 0.08);
     } else if (tipo === 'acierto') {
@@ -2175,6 +2185,17 @@ function reproducirSonido(tipo) {
     }
   } catch (e) {}
 }
+
+// Desbloquea el audio en el primer toque (requisito de iOS/Android).
+['touchstart', 'pointerdown'].forEach(ev => document.addEventListener(ev, function desbloquear() {
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    audioCtx.resume();
+    const b = audioCtx.createBuffer(1, 1, 22050);
+    const s = audioCtx.createBufferSource();
+    s.buffer = b; s.connect(audioCtx.destination); s.start(0);
+  } catch (e) {}
+}, { once: true, passive: true }));
 
 document.addEventListener('click', e => {
   if (e.target.closest('#sonido-btn')) return;
