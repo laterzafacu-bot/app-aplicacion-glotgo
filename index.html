@@ -2166,25 +2166,65 @@ function crearWav(notas) {
   v.setUint32(24, sr, true); v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
   txt(36, 'data'); v.setUint32(40, datos.length * 2, true);
   for (let i = 0; i < datos.length; i++) v.setInt16(44 + i * 2, Math.max(-1, Math.min(1, datos[i])) * 32767, true);
+  crearWav.ultimo = datos;
   return URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
 }
 
 const sonidos = {};
+const muestras = {};
+const buffersWeb = {};
+let audioCtx = null;
+let silencioIos = null;
+const SR_SONIDO = 22050;
+
+function registrarSonido(nombre, notas) {
+  const url = crearWav(notas);
+  muestras[nombre] = crearWav.ultimo;
+  const a = new Audio(url);
+  a.preload = 'auto';
+  sonidos[nombre] = a;
+}
 try {
-  sonidos.click = new Audio(crearWav([{ freq: 880, ini: 0, dur: 0.1, vol: 0.8 }]));
-  sonidos.acierto = new Audio(crearWav([
+  registrarSonido('click', [{ freq: 880, ini: 0, dur: 0.1, vol: 0.8 }]);
+  registrarSonido('acierto', [
     { freq: 523, ini: 0, dur: 0.18, vol: 0.8 },
     { freq: 659, ini: 0.12, dur: 0.18, vol: 0.8 },
-    { freq: 784, ini: 0.24, dur: 0.35, vol: 0.8 }]));
-  sonidos.error = new Audio(crearWav([
+    { freq: 784, ini: 0.24, dur: 0.35, vol: 0.8 }]);
+  registrarSonido('error', [
     { freq: 260, ini: 0, dur: 0.2, vol: 0.7, tipo: 'cuadrada' },
-    { freq: 196, ini: 0.16, dur: 0.35, vol: 0.7, tipo: 'cuadrada' }]));
-  Object.values(sonidos).forEach(a => { a.preload = 'auto'; });
+    { freq: 196, ini: 0.16, dur: 0.35, vol: 0.7, tipo: 'cuadrada' }]);
 } catch (e) {}
+
+// Web Audio tiene mucha menos latencia que <audio>; si no está listo se usa <audio> como respaldo.
+function prepararAudioWeb() {
+  try {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      Object.keys(muestras).forEach(n => {
+        const buf = audioCtx.createBuffer(1, muestras[n].length, SR_SONIDO);
+        buf.copyToChannel(muestras[n], 0);
+        buffersWeb[n] = buf;
+      });
+      // Un <audio> en loop y silencioso evita que el interruptor de silencio del iPhone mute Web Audio.
+      const sil = crearWav([{ freq: 100, ini: 0, dur: 1, vol: 0 }]);
+      silencioIos = new Audio(sil);
+      silencioIos.loop = true;
+      silencioIos.play().catch(() => {});
+    }
+    if (audioCtx.state !== 'running') audioCtx.resume();
+  } catch (e) {}
+}
 
 function reproducirSonido(tipo) {
   if (!sonidoActivo || !sonidos[tipo]) return;
   try {
+    if (audioCtx && audioCtx.state === 'running' && buffersWeb[tipo]) {
+      const src = audioCtx.createBufferSource();
+      src.buffer = buffersWeb[tipo];
+      src.connect(audioCtx.destination);
+      src.start(0);
+      return;
+    }
     const a = sonidos[tipo];
     a.currentTime = 0;
     const p = a.play();
@@ -2194,6 +2234,7 @@ function reproducirSonido(tipo) {
 
 // pointerdown (al tocar) y no click (al soltar) para que el sonido sea inmediato.
 document.addEventListener('pointerdown', e => {
+  prepararAudioWeb();
   if (e.target.closest('#sonido-btn')) return;
   if (e.target.closest('button, .nav-item, .vocab-card, .lectura-card')) reproducirSonido('click');
 }, true);
