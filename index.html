@@ -2236,7 +2236,7 @@ function reproducirSonido(tipo) {
 document.addEventListener('pointerdown', e => {
   prepararAudioWeb();
   if (e.target.closest('#sonido-btn')) return;
-  if (e.target.closest('button, .nav-item, .vocab-card, .lectura-card')) reproducirSonido('click');
+  if (e.target.closest('#sidebar-toggle, .nav-item')) reproducirSonido('click');
 }, true);
 
 (function initBotonSonido() {
@@ -2251,7 +2251,6 @@ document.addEventListener('pointerdown', e => {
     sonidoActivo = !sonidoActivo;
     try { localStorage.setItem('glotgo-sonido', sonidoActivo ? 'on' : 'off'); } catch (e) {}
     pintar();
-    reproducirSonido('click');
   });
 })();
 
