@@ -1162,6 +1162,28 @@
     padding: 0 0 14px;
     font-family: inherit;
   }
+  /* Botones "Volver a temas / categorías": más visibles */
+  #gramatica-back, #vocab-back, #lectura-back, #comunidad-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 16px;
+    padding: 10px 18px;
+    background: var(--azul-oscuro);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: background .15s, transform .15s;
+  }
+  #gramatica-back:hover, #vocab-back:hover, #lectura-back:hover, #comunidad-back:hover {
+    background: var(--celeste-dark);
+    transform: translateX(-2px);
+  }
   .comunidad-detail { width: 100%; }
   .email-row {
     display: flex;
@@ -2236,7 +2258,7 @@ function reproducirSonido(tipo) {
 document.addEventListener('pointerdown', e => {
   prepararAudioWeb();
   if (e.target.closest('#sonido-btn')) return;
-  if (e.target.closest('#sidebar-toggle, .nav-item')) reproducirSonido('click');
+  if (e.target.closest('#sidebar-toggle, .nav-item, #gramatica-back, #vocab-back, #lectura-back, #comunidad-back')) reproducirSonido('click');
 }, true);
 
 (function initBotonSonido() {
