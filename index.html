@@ -1494,7 +1494,8 @@
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><text x="12" y="14.6" text-anchor="middle" font-size="6.5" font-weight="700" fill="currentColor" stroke="none" font-family="Arial,sans-serif">Hi!</text></svg>
       </div>
       <div class="name">GlotGo</div>
-      <button type="button" id="logout-btn" title="Cerrar sesión" style="margin-left:auto;background:none;border:none;cursor:pointer;color:#5C7A9E;font-size:12px;">Salir</button>
+      <button type="button" id="sonido-btn" style="margin-left:auto;background:none;border:none;cursor:pointer;font-size:14px;"></button>
+      <button type="button" id="logout-btn" title="Cerrar sesión" style="margin-left:8px;background:none;border:none;cursor:pointer;color:#5C7A9E;font-size:12px;">Salir</button>
     </div>
     <nav class="nav-list">
       <button class="nav-item active" data-view="home">
@@ -2138,7 +2139,67 @@ const VOCAB_CATEGORIAS = [
 function avatarImg(pose) {
   return '<img class="avatar-msg" src="img/avatar/' + pose + '.png" alt="" aria-hidden="true">';
 }
+/* ---------- Efectos de sonido (Web Audio, sin archivos) ---------- */
+let sonidoActivo = true;
+try { sonidoActivo = localStorage.getItem('glotgo-sonido') !== 'off'; } catch (e) {}
+let audioCtx = null;
+
+function tono(freq, inicio, dur, tipo, vol) {
+  const t0 = audioCtx.currentTime + inicio;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = tipo || 'sine';
+  osc.frequency.setValueAtTime(freq, t0);
+  gain.gain.setValueAtTime(0.0001, t0);
+  gain.gain.exponentialRampToValueAtTime(vol || 0.15, t0 + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start(t0);
+  osc.stop(t0 + dur + 0.02);
+}
+
+function reproducirSonido(tipo) {
+  if (!sonidoActivo) return;
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    if (tipo === 'click') {
+      tono(660, 0, 0.07, 'sine', 0.08);
+    } else if (tipo === 'acierto') {
+      tono(523, 0, 0.15, 'triangle', 0.16);
+      tono(659, 0.12, 0.15, 'triangle', 0.16);
+      tono(784, 0.24, 0.3, 'triangle', 0.16);
+    } else if (tipo === 'error') {
+      tono(260, 0, 0.18, 'sawtooth', 0.09);
+      tono(196, 0.16, 0.3, 'sawtooth', 0.09);
+    }
+  } catch (e) {}
+}
+
+document.addEventListener('click', e => {
+  if (e.target.closest('#sonido-btn')) return;
+  if (e.target.closest('button, .nav-item, .vocab-card, .lectura-card')) reproducirSonido('click');
+}, true);
+
+(function initBotonSonido() {
+  const btn = document.getElementById('sonido-btn');
+  if (!btn) return;
+  const pintar = () => {
+    btn.textContent = sonidoActivo ? '🔊' : '🔇';
+    btn.title = sonidoActivo ? 'Silenciar sonidos' : 'Activar sonidos';
+  };
+  pintar();
+  btn.addEventListener('click', () => {
+    sonidoActivo = !sonidoActivo;
+    try { localStorage.setItem('glotgo-sonido', sonidoActivo ? 'on' : 'off'); } catch (e) {}
+    pintar();
+    reproducirSonido('click');
+  });
+})();
+
 function mostrarResumenConAvatar(el, pose, texto) {
+  if (pose === 'celebra') reproducirSonido('acierto');
+  else if (pose === 'triste') reproducirSonido('error');
   el.classList.add('con-avatar');
   el.innerHTML = avatarImg(pose) + '<div>' + escapeHtml(texto) + '</div>';
 }
@@ -2414,6 +2475,7 @@ async function revisarQuizVocabulario() {
 
   const poseVocab = incorrectas === 0 ? 'celebra' : (correctas >= Math.ceil((correctas + incorrectas) * 0.75) ? 'graduado' : 'duda');
   const resumenVocabEl = document.getElementById('vocab-quiz-resumen');
+  reproducirSonido(poseVocab === 'celebra' || poseVocab === 'graduado' ? 'acierto' : 'error');
   resumenVocabEl.classList.add('con-avatar');
   resumenVocabEl.innerHTML = avatarImg(poseVocab) + '<div>' +
     `<span class="correcta">${correctas} correctas</span> · <span class="incorrecta">${incorrectas} incorrectas</span>` +
