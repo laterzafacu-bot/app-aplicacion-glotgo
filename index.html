@@ -2192,7 +2192,8 @@ function reproducirSonido(tipo) {
   } catch (e) {}
 }
 
-document.addEventListener('click', e => {
+// pointerdown (al tocar) y no click (al soltar) para que el sonido sea inmediato.
+document.addEventListener('pointerdown', e => {
   if (e.target.closest('#sonido-btn')) return;
   if (e.target.closest('button, .nav-item, .vocab-card, .lectura-card')) reproducirSonido('click');
 }, true);
