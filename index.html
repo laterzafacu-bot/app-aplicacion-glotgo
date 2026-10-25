@@ -1921,12 +1921,16 @@ const PROGRESO_WEBHOOK_URL = "https://dominioservicion8nfacundo.cloud/webhook/va
 let progresoSemanaCache = null; // { tipos: {'vocabulario:Work and employment': 25, ...}, puntos_semana_total: 25 }
 
 async function cargarProgresoSemana() {
+  await enviarPendientes();
   try {
     const res = await postConToken(PROGRESO_WEBHOOK_URL, { accion: 'listar' });
     const data = await res.json();
+    // Si la respuesta no trae los totales (error, sesión vencida), no se pisa lo que ya se mostraba.
+    if (data.puntos_semana_total === undefined) throw new Error('respuesta sin totales');
     progresoSemanaCache = data;
-    actualizarPuntosSemana(data.puntos_semana_total || 0);
-    actualizarPuntosMes(data.puntos_mes_total || data.puntos_semana_total || 0);
+    aplicarPendientesEnCache();
+    actualizarPuntosSemana(progresoSemanaCache.puntos_semana_total || 0);
+    actualizarPuntosMes(progresoSemanaCache.puntos_mes_total || progresoSemanaCache.puntos_semana_total || 0);
     aplicarBloqueosVocabulario();
     aplicarBloqueosLectura();
   } catch (e) {
@@ -1940,23 +1944,84 @@ function estaBloqueadaEstaSemana(tipo, tema) {
   return Boolean(progresoSemanaCache.tipos && progresoSemanaCache.tipos[tipo + ':' + tema] !== undefined);
 }
 
+// Actividades que no se pudieron guardar en el servidor (sin conexión, error de n8n, etc.).
+// Quedan en este dispositivo y se reenvían solas hasta que el servidor las confirme.
+const PENDIENTES_KEY = 'progreso_pendientes';
+function leerPendientes() {
+  try { return JSON.parse(localStorage.getItem(PENDIENTES_KEY)) || []; } catch (e) { return []; }
+}
+function guardarPendientes(lista) {
+  try { localStorage.setItem(PENDIENTES_KEY, JSON.stringify(lista)); } catch (e) {}
+}
+function agregarPendiente(tipo, tema, puntos) {
+  const lista = leerPendientes();
+  const id = alumnoId();
+  if (!lista.some(p => p.alumno_id === id && p.tipo === tipo && p.tema === tema)) {
+    lista.push({ alumno_id: id, tipo, tema, puntos });
+    guardarPendientes(lista);
+  }
+}
+// Muestra en pantalla lo pendiente del alumno actual para que no parezca perdido mientras no se sincroniza.
+function aplicarPendientesEnCache() {
+  const id = alumnoId();
+  leerPendientes().filter(p => p.alumno_id === id).forEach(p => {
+    const clave = p.tipo + ':' + p.tema;
+    if (progresoSemanaCache.tipos[clave] === undefined) {
+      progresoSemanaCache.tipos[clave] = p.puntos;
+      progresoSemanaCache.puntos_semana_total = (progresoSemanaCache.puntos_semana_total || 0) + p.puntos;
+      progresoSemanaCache.puntos_mes_total = (progresoSemanaCache.puntos_mes_total || 0) + p.puntos;
+    }
+  });
+}
+let enviandoPendientes = false;
+async function enviarPendientes() {
+  if (enviandoPendientes) return;
+  const id = alumnoId();
+  if (!id || !leerPendientes().some(p => p.alumno_id === id)) return;
+  enviandoPendientes = true;
+  try {
+    for (const p of leerPendientes().filter(x => x.alumno_id === id)) {
+      try {
+        const res = await postConToken(PROGRESO_WEBHOOK_URL, { accion: 'otorgar', tipo: p.tipo, tema: p.tema, puntos: p.puntos });
+        const data = await res.json();
+        if (data.puntos_semana_total === undefined) break;
+        guardarPendientes(leerPendientes().filter(x => !(x.alumno_id === id && x.tipo === p.tipo && x.tema === p.tema)));
+      } catch (e) { break; }
+    }
+  } finally { enviandoPendientes = false; }
+}
+window.addEventListener('online', () => { if (alumnoId()) cargarProgresoSemana(); });
+
 // Otorga los puntos de una actividad una sola vez por semana (tipo+tema identifican
 // la actividad puntual, ej. tipo="lectura", tema="Technology & AI"). Repetirla la misma
 // semana no vuelve a sumar. "puntos" permite que una actividad valga distinto de las demás
 // (ej. Comunidad = 50). El estado real vive en Supabase (progreso_semanal), no en localStorage,
 // para que sobreviva entre dispositivos y sea la fuente de verdad del bloqueo semanal.
+// Si el guardado falla, la actividad se cuenta igual en pantalla y queda pendiente de reenvío.
 async function otorgarPuntosActividad(tipo, tema, puntos = PUNTOS_POR_ACTIVIDAD) {
   if (estaBloqueadaEstaSemana(tipo, tema)) return false;
-  const res = await postConToken(PROGRESO_WEBHOOK_URL, { accion: 'otorgar', tipo, tema, puntos });
-  const data = await res.json();
   if (!progresoSemanaCache) progresoSemanaCache = { tipos: {}, puntos_semana_total: 0 };
-  // Ya sea que se otorgó recién o que el servidor dijo "ya estaba otorgado", la actividad
-  // queda hecha esta semana: se bloquea la tarjeta sin depender de haber cargado el listado.
-  if (data.puntos_semana_total !== undefined) {
+  let data = null;
+  try {
+    const res = await postConToken(PROGRESO_WEBHOOK_URL, { accion: 'otorgar', tipo, tema, puntos });
+    data = await res.json();
+  } catch (e) {}
+  if (!data || data.puntos_semana_total === undefined) {
+    agregarPendiente(tipo, tema, puntos);
     progresoSemanaCache.tipos[tipo + ':' + tema] = puntos;
+    progresoSemanaCache.puntos_semana_total = (progresoSemanaCache.puntos_semana_total || 0) + puntos;
+    progresoSemanaCache.puntos_mes_total = (progresoSemanaCache.puntos_mes_total || 0) + puntos;
+    actualizarPuntosSemana(progresoSemanaCache.puntos_semana_total);
+    actualizarPuntosMes(progresoSemanaCache.puntos_mes_total);
     aplicarBloqueosVocabulario();
     aplicarBloqueosLectura();
+    return true;
   }
+  // Ya sea que se otorgó recién o que el servidor dijo "ya estaba otorgado", la actividad
+  // queda hecha esta semana: se bloquea la tarjeta sin depender de haber cargado el listado.
+  progresoSemanaCache.tipos[tipo + ':' + tema] = puntos;
+  aplicarBloqueosVocabulario();
+  aplicarBloqueosLectura();
   progresoSemanaCache.puntos_semana_total = data.puntos_semana_total;
   actualizarPuntosSemana(data.puntos_semana_total);
   if (data.puntos_mes_total !== undefined) {
