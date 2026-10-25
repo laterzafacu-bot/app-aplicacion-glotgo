@@ -282,6 +282,27 @@
     margin-right: auto;
   }
 
+  /* Cómo funciona + tour */
+  .ayuda-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 20px; }
+  .ayuda-card h3 { font-size: 15px; color: var(--azul-oscuro); }
+  .ayuda-card p, .ayuda-card li { font-size: 13.5px; line-height: 1.55; color: var(--texto); margin: 0 0 8px; }
+  .ayuda-card ul { margin: 0 0 8px; padding-left: 20px; }
+  .ayuda-destacada { grid-column: 1 / -1; background: var(--celeste-bg); }
+  .tour-overlay { position: fixed; inset: 0; z-index: 1000; background: rgba(14, 62, 130, 0.55); display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .tour-overlay[hidden] { display: none; }
+  .tour-modal { background: var(--blanco); border-radius: 20px; padding: 28px 26px 22px; max-width: 420px; width: 100%; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.25); }
+  .tour-emoji { font-size: 44px; line-height: 1; margin-bottom: 10px; }
+  .tour-modal h2 { margin: 0 0 10px; font-size: 19px; color: var(--azul-oscuro); }
+  .tour-modal p { margin: 0 0 16px; font-size: 14px; line-height: 1.6; color: var(--gris); }
+  .tour-dots { display: flex; justify-content: center; gap: 6px; margin-bottom: 18px; }
+  .tour-dots span { width: 8px; height: 8px; border-radius: 50%; background: var(--border); }
+  .tour-dots span.on { background: var(--celeste); }
+  .tour-acciones { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .tour-btn { background: var(--celeste); color: #fff; border: none; border-radius: 10px; padding: 10px 22px; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .tour-btn:hover { background: var(--celeste-dark); }
+  .tour-btn-sec { background: none; border: none; color: var(--celeste-dark); font-family: inherit; font-size: 13px; cursor: pointer; padding: 8px 4px; }
+  @media (max-width: 768px) { .ayuda-grid { grid-template-columns: 1fr; } }
+
   h1.greeting {
     font-size: 22px;
     margin: 0 0 4px;
@@ -1540,6 +1561,10 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         Conversaciones en comunidad
       </button>
+      <button class="nav-item" data-view="ayuda">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Cómo funciona
+      </button>
     </nav>
    </div>
   </aside>
@@ -1732,7 +1757,68 @@
       </div>
     </section>
 
+    <!-- ---------------- CÓMO FUNCIONA ---------------- -->
+    <section class="view" id="view-ayuda">
+      <h1 class="greeting">Cómo funciona</h1>
+      <p class="greeting-sub">Un repaso corto de qué hay en la app y cómo se suman los puntos.</p>
+
+      <div class="ayuda-grid">
+        <div class="card ayuda-card ayuda-destacada">
+          <h3>⭐ Puntos y metas</h3>
+          <p>Cada actividad que completás suma puntos a tu semana:</p>
+          <ul>
+            <li><strong>Vocabulario:</strong> +25 puntos al hacer el quiz.</li>
+            <li><strong>Lectura:</strong> +25 puntos si acertás al menos el 75% del quiz.</li>
+            <li><strong>Conversaciones en comunidad:</strong> +50 puntos al terminar la clase.</li>
+            <li><strong>Feedback:</strong> +25 puntos por contarnos qué mejorarías de la app.</li>
+          </ul>
+          <p>Tu meta semanal es de <strong id="ayuda-meta-semanal">–</strong> puntos y la del mes, de <strong id="ayuda-meta-mensual">–</strong>. Los puntos del mes son la suma de todas tus semanas. La carita del Home cambia según cuánto avanzaste.</p>
+        </div>
+
+        <div class="card ayuda-card">
+          <h3>🏠 Home</h3>
+          <p>Tu resumen: puntos de la semana, puntos del mes y el calendario con tus clases de los próximos días.</p>
+        </div>
+
+        <div class="card ayuda-card">
+          <h3>🔤 Vocabulario</h3>
+          <p>Elegí una categoría y aprendé 10 palabras nuevas. Al final hacés un breve quiz para afianzarlas. La semana siguiente, la misma categoría te trae las próximas 10.</p>
+        </div>
+
+        <div class="card ayuda-card">
+          <h3>📖 Lectura</h3>
+          <p>Elegí un tema, leé una noticia real de nivel intermedio y respondé un quiz de comprensión.</p>
+        </div>
+
+        <div class="card ayuda-card">
+          <h3>💬 Conversaciones en comunidad</h3>
+          <p>Practicá hablando con otro alumno durante unos 20 minutos. Elegí un tema y sumate a un horario ya propuesto, o proponé el tuyo: la invitación con el link de Meet les llega a los dos por Calendar. Cuando estén conectados, apretá "Comenzó la clase" y van viendo una pregunta a la vez.</p>
+        </div>
+
+        <div class="card ayuda-card">
+          <h3>🚧 Gramática</h3>
+          <p>Próximamente: mapas conceptuales por nivel y tema.</p>
+        </div>
+      </div>
+
+      <button type="button" class="tour-btn-sec" id="ayuda-ver-tour">Ver el tour de bienvenida otra vez</button>
+    </section>
+
   </main>
+</div>
+
+<!-- Tour de bienvenida -->
+<div class="tour-overlay" id="tour-overlay" hidden>
+  <div class="tour-modal" role="dialog" aria-modal="true" aria-labelledby="tour-titulo">
+    <div class="tour-emoji" id="tour-emoji"></div>
+    <h2 id="tour-titulo"></h2>
+    <p id="tour-texto"></p>
+    <div class="tour-dots" id="tour-dots"></div>
+    <div class="tour-acciones">
+      <button type="button" class="tour-btn-sec" id="tour-saltar">Saltar</button>
+      <button type="button" class="tour-btn" id="tour-siguiente">Siguiente</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -1814,6 +1900,7 @@ function mostrarApp() {
   document.getElementById('login-gate').classList.add('hidden');
   document.getElementById('app-shell').classList.remove('hidden');
   cargarProgresoSemana();
+  if (!tourYaVisto()) tourAbrir();
 }
 function mostrarLogin() {
   document.getElementById('app-shell').classList.add('hidden');
@@ -3610,6 +3697,57 @@ comunidadProponerBtn.addEventListener('click', async () => {
     comunidadProponerBtn.textContent = 'Proponer este horario';
   }
 });
+
+/* ---------- Cómo funciona + tour de bienvenida ---------- */
+document.getElementById('ayuda-meta-semanal').textContent = PUNTOS_META_SEMANAL;
+document.getElementById('ayuda-meta-mensual').textContent = PUNTOS_META_MENSUAL;
+
+const TOUR_KEY = 'glotgo-tour-visto';
+const TOUR_PASOS = [
+  { emoji: '👋', titulo: '¡Bienvenido a GlotGo!', texto: 'Acá practicás inglés con actividades cortas. Cada una te suma puntos para llegar a tu meta de la semana y del mes.' },
+  { emoji: '📚', titulo: 'Vocabulario y Lectura', texto: 'En Vocabulario aprendés 10 palabras nuevas y hacés un quiz. En Lectura leés una noticia real y respondés preguntas. Cada una suma 25 puntos.' },
+  { emoji: '💬', titulo: 'Conversaciones en comunidad', texto: 'Practicá hablando unos 20 minutos con otro alumno por Meet. Es la actividad que más puntos da: 50.' },
+  { emoji: '❓', titulo: 'Si te perdés, ¡mirá "Cómo funciona"!', texto: 'En el menú vas a encontrar siempre una explicación corta de cada sección y de cómo se ganan los puntos.' }
+];
+const tourOverlay = document.getElementById('tour-overlay');
+let tourPaso = 0;
+
+function tourMarcarVisto() {
+  try { localStorage.setItem(TOUR_KEY, '1'); } catch (e) {}
+}
+function tourYaVisto() {
+  try { return localStorage.getItem(TOUR_KEY) === '1'; } catch (e) { return false; }
+}
+function tourRender() {
+  const p = TOUR_PASOS[tourPaso];
+  document.getElementById('tour-emoji').textContent = p.emoji;
+  document.getElementById('tour-titulo').textContent = p.titulo;
+  document.getElementById('tour-texto').textContent = p.texto;
+  document.getElementById('tour-dots').innerHTML = TOUR_PASOS.map((_, i) => '<span class="' + (i === tourPaso ? 'on' : '') + '"></span>').join('');
+  const ultimo = tourPaso === TOUR_PASOS.length - 1;
+  document.getElementById('tour-siguiente').textContent = ultimo ? 'Ver cómo funciona' : 'Siguiente';
+  document.getElementById('tour-saltar').hidden = ultimo;
+}
+function tourAbrir() {
+  tourPaso = 0;
+  tourRender();
+  tourOverlay.hidden = false;
+}
+function tourCerrar() {
+  tourOverlay.hidden = true;
+  tourMarcarVisto();
+}
+document.getElementById('tour-saltar').addEventListener('click', tourCerrar);
+document.getElementById('tour-siguiente').addEventListener('click', () => {
+  if (tourPaso < TOUR_PASOS.length - 1) {
+    tourPaso++;
+    tourRender();
+  } else {
+    tourCerrar();
+    switchView('ayuda');
+  }
+});
+document.getElementById('ayuda-ver-tour').addEventListener('click', tourAbrir);
 
 /* ---------- Arranque ---------- */
 // Va al final del script a propósito: mostrarApp() llama a cargarProgresoSemana(), que usa
