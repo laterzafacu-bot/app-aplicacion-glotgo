@@ -288,12 +288,12 @@
   .ayuda-card p, .ayuda-card li { font-size: 13.5px; line-height: 1.55; color: var(--texto); margin: 0 0 8px; }
   .ayuda-card ul { margin: 0 0 8px; padding-left: 20px; }
   .ayuda-destacada { grid-column: 1 / -1; background: var(--celeste-bg); }
-  .tour-overlay { position: fixed; inset: 0; z-index: 1000; background: rgba(14, 62, 130, 0.55); display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .tour-overlay { position: fixed; inset: 0; z-index: 1000; background: linear-gradient(160deg, var(--bg) 0%, var(--celeste-bg) 100%); display: flex; align-items: center; justify-content: center; padding: 20px; }
   .tour-overlay[hidden] { display: none; }
-  .tour-modal { background: var(--blanco); border-radius: 20px; padding: 28px 26px 22px; max-width: 420px; width: 100%; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.25); }
+  .tour-modal { background: var(--blanco); border-radius: 20px; padding: 28px 26px 22px; max-width: 540px; width: 100%; text-align: center; box-shadow: 0 12px 40px rgba(14, 62, 130, 0.15); border: 1px solid var(--border); }
   .tour-emoji { font-size: 44px; line-height: 1; margin-bottom: 10px; }
   .tour-modal h2 { margin: 0 0 10px; font-size: 19px; color: var(--azul-oscuro); }
-  .tour-modal p { margin: 0 0 16px; font-size: 14px; line-height: 1.6; color: var(--gris); }
+  .tour-modal p { margin: 0 0 16px; font-size: 15px; line-height: 1.6; color: var(--gris); }
   .tour-dots { display: flex; justify-content: center; gap: 6px; margin-bottom: 18px; }
   .tour-dots span { width: 8px; height: 8px; border-radius: 50%; background: var(--border); }
   .tour-dots span.on { background: var(--celeste); }
@@ -1782,12 +1782,14 @@
 
         <div class="card ayuda-card">
           <h3>🔤 Vocabulario</h3>
-          <p>Elegí una categoría y aprendé 10 palabras nuevas. Al final hacés un breve quiz para afianzarlas. La semana siguiente, la misma categoría te trae las próximas 10.</p>
+          <p>Elegís una categoría (por ejemplo, Work and Employment) y aprendés 10 palabras nuevas sobre ese tema. Después hacés un quiz corto para afianzar lo que viste.</p>
+          <p><strong>Importante:</strong> al hacer el quiz de una categoría, esa categoría queda bloqueada hasta la semana que viene (se habilita de nuevo el lunes). Cuando vuelvas, te tocan otras 10 palabras. Mientras tanto podés repasar las palabras, pero no volver a sumar puntos con ese quiz.</p>
         </div>
 
         <div class="card ayuda-card">
           <h3>📖 Lectura</h3>
-          <p>Elegí un tema, leé una noticia real de nivel intermedio y respondé un quiz de comprensión.</p>
+          <p>Elegís un tema, leés una noticia real de nivel intermedio y respondés un quiz de comprensión. Tenés que acertar al menos el 75% para sumar los puntos.</p>
+          <p><strong>Importante:</strong> igual que en Vocabulario, una vez que hacés el quiz de un tema, ese tema queda bloqueado hasta la semana que viene. Podés volver a leer la noticia cuando quieras, pero el quiz se habilita de nuevo el lunes.</p>
         </div>
 
         <div class="card ayuda-card">
@@ -3704,10 +3706,12 @@ document.getElementById('ayuda-meta-mensual').textContent = PUNTOS_META_MENSUAL;
 
 const TOUR_KEY = 'glotgo-tour-visto';
 const TOUR_PASOS = [
-  { emoji: '👋', titulo: '¡Bienvenido a GlotGo!', texto: 'Acá practicás inglés con actividades cortas. Cada una te suma puntos para llegar a tu meta de la semana y del mes.' },
-  { emoji: '📚', titulo: 'Vocabulario y Lectura', texto: 'En Vocabulario aprendés 10 palabras nuevas y hacés un quiz. En Lectura leés una noticia real y respondés preguntas. Cada una suma 25 puntos.' },
-  { emoji: '💬', titulo: 'Conversaciones en comunidad', texto: 'Practicá hablando unos 20 minutos con otro alumno por Meet. Es la actividad que más puntos da: 50.' },
-  { emoji: '❓', titulo: 'Si te perdés, ¡mirá "Cómo funciona"!', texto: 'En el menú vas a encontrar siempre una explicación corta de cada sección y de cómo se ganan los puntos.' }
+  { emoji: '👋', titulo: '¡Bienvenido a GlotGo!', texto: 'Acá practicás inglés con actividades cortas y a tu ritmo. Cada actividad que completás te suma puntos.' },
+  { emoji: '⭐', titulo: 'El sistema de puntos', texto: 'La idea es llegar a ' + PUNTOS_META_SEMANAL + ' puntos por semana (la carita del Home va cambiando a medida que avanzás) y a ' + PUNTOS_META_MENSUAL + ' en el mes. Vocabulario y Lectura suman 25 puntos cada una, y las Conversaciones en comunidad suman 50. Los puntos del mes son la suma de todas tus semanas.' },
+  { emoji: '🔤', titulo: 'Vocabulario', texto: 'Elegís una categoría (por ejemplo, Work and Employment) y aprendés 10 palabras nuevas sobre ese tema. Después hacés un quiz corto para afianzar lo que viste. Ojo: una vez que hacés el quiz de una categoría, esa categoría queda bloqueada hasta la semana que viene. Cuando vuelvas, te van a tocar 10 palabras nuevas.' },
+  { emoji: '📖', titulo: 'Lectura', texto: 'Elegís un tema, leés una noticia real de nivel intermedio y respondés un quiz de comprensión. Para sumar los 25 puntos tenés que acertar al menos el 75%. Igual que en Vocabulario, cuando hacés el quiz de un tema, ese tema queda bloqueado hasta la semana que viene.' },
+  { emoji: '💬', titulo: 'Conversaciones en comunidad', texto: 'Practicá hablando unos 20 minutos con otro alumno por Meet. Elegís un tema, te sumás a un horario que ya propuso alguien o proponés el tuyo, y la invitación te llega por Calendar. Es la actividad que más puntos da: 50.' },
+  { emoji: '❓', titulo: 'Si te perdés, mirá "Cómo funciona"', texto: 'En el menú vas a encontrar siempre una explicación de cada sección y de cómo se ganan los puntos.' }
 ];
 const tourOverlay = document.getElementById('tour-overlay');
 let tourPaso = 0;
