@@ -1748,7 +1748,7 @@
 
           <div class="clase-cta">
             <button type="button" id="comunidad-clase-btn">Comenzó la clase</button>
-            <p class="clase-cta-sub">Cuando los dos estén conectados por Meet, apretá esto y van a ir viendo una pregunta a la vez.</p>
+            <p class="clase-cta-sub">Apretalo cuando estén conectados por Meet (solo se puede durante los 20 minutos de la conversación) y van a ir viendo una pregunta a la vez. Después, confirmá que tu compañero/a también se conectó: los puntos se suman cuando los dos confirman.</p>
           </div>
         </div>
 
@@ -3389,53 +3389,91 @@ function renderPreguntaClaseComunidad() {
   comunidadClaseFin.hidden = true;
 }
 
-comunidadClaseBtn.addEventListener('click', () => {
-  if (!comunidadPreguntasActivas.length || comunidadMotivoClase !== 'disponible') return;
+// Acciones de la clase (conectar / confirmar / cancelar) contra el flujo de asistencia.
+// Devuelve { ok, data } y nunca tira por un 409: el flujo responde ahí los motivos de rechazo.
+async function accionClaseComunidad(accion) {
+  const res = await postConToken(COMUNIDAD_COMPLETAR_URL, { accion, sesion_id: comunidadSesionParaClaseId });
+  let data = {};
+  try { data = await res.json(); } catch (e) { /* respuesta sin cuerpo */ }
+  return { ok: res.ok && data.ok !== false, data };
+}
+
+async function recargarDetalleComunidad(mensaje, esError) {
+  if (!comunidadTemaActivo) return;
+  await abrirTemaComunidad(comunidadTemaActivo.id, comunidadTemaActivo.nombre);
+  if (mensaje) mostrarResultadoComunidad(mensaje, esError);
+}
+
+comunidadClaseBtn.addEventListener('click', async () => {
+  if (comunidadClaseBtn.disabled) return;
+
+  if (comunidadMotivoClase === 'por_confirmar') {
+    if (!confirm('¿Confirmás que tu compañero/a se conectó a la conversación? Los puntos se suman cuando los dos confirman.')) return;
+    comunidadClaseBtn.disabled = true;
+    comunidadClaseBtn.textContent = 'Confirmando...';
+    try {
+      const { ok, data } = await accionClaseComunidad('confirmar');
+      if (ok || data.error === 'ya_registrado') {
+        if (data.puntos_otorgados) {
+          if (!progresoSemanaCache) progresoSemanaCache = { tipos: {}, puntos_semana_total: 0 };
+          progresoSemanaCache.tipos['comunidad:' + comunidadTemaActivo.nombre] = 50;
+          progresoSemanaCache.puntos_semana_total = (progresoSemanaCache.puntos_semana_total || 0) + 50;
+          actualizarPuntosSemana(progresoSemanaCache.puntos_semana_total);
+          progresoSemanaCache.puntos_mes_total = (progresoSemanaCache.puntos_mes_total || 0) + 50;
+          actualizarPuntosMes(progresoSemanaCache.puntos_mes_total);
+          await recargarDetalleComunidad('¡Listo! Los dos confirmaron: sumaste 50 puntos a tu semana.', false);
+        } else {
+          await recargarDetalleComunidad('Confirmado. Los 50 puntos se suman cuando tu compañero/a también confirme.', false);
+        }
+      } else {
+        await recargarDetalleComunidad(escapeHtml(data.mensaje || 'No se pudo confirmar.'), true);
+      }
+    } catch (err) {
+      await recargarDetalleComunidad('No se pudo confirmar (' + escapeHtml(err.message) + ').', true);
+    }
+    return;
+  }
+
+  if (comunidadMotivoClase !== 'disponible' || !comunidadPreguntasActivas.length) return;
+  comunidadClaseBtn.disabled = true;
+  comunidadClaseBtn.textContent = 'Registrando...';
+  try {
+    const { ok, data } = await accionClaseComunidad('conectar');
+    if (!ok && data.error !== 'ya_registrado') {
+      await recargarDetalleComunidad(escapeHtml(data.mensaje || 'No se pudo registrar tu conexión.'), true);
+      return;
+    }
+  } catch (err) {
+    await recargarDetalleComunidad('No se pudo registrar tu conexión (' + escapeHtml(err.message) + ').', true);
+    return;
+  }
+  comunidadMotivoClase = 'por_confirmar';
+  actualizarBotonClaseComunidad();
   comunidadClaseIndex = 0;
   renderPreguntaClaseComunidad();
   comunidadDetailBody.hidden = true;
   comunidadClaseSection.hidden = false;
 });
 
-comunidadClaseSiguiente.addEventListener('click', async () => {
+comunidadClaseSiguiente.addEventListener('click', () => {
   comunidadClaseIndex++;
   if (comunidadClaseIndex >= comunidadPreguntasActivas.length) {
     comunidadClaseProgreso.hidden = true;
     comunidadClasePregunta.hidden = true;
     comunidadClaseSiguiente.hidden = true;
     comunidadClaseFin.hidden = false;
-    const msgEl = document.getElementById('comunidad-clase-puntos-msg');
-    msgEl.textContent = 'Guardando...';
-    try {
-      const res = await fetch(COMUNIDAD_COMPLETAR_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sesion_id: comunidadSesionParaClaseId, alumno_id: alumnoId() })
-      });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const data = await res.json();
-      if (data.puntos_otorgados) {
-        if (!progresoSemanaCache) progresoSemanaCache = { tipos: {}, puntos_semana_total: 0 };
-        progresoSemanaCache.tipos['comunidad:' + comunidadTemaActivo.nombre] = 50;
-        progresoSemanaCache.puntos_semana_total = (progresoSemanaCache.puntos_semana_total || 0) + 50;
-        actualizarPuntosSemana(progresoSemanaCache.puntos_semana_total);
-        progresoSemanaCache.puntos_mes_total = (progresoSemanaCache.puntos_mes_total || 0) + 50;
-        actualizarPuntosMes(progresoSemanaCache.puntos_mes_total);
-        comunidadMotivoClase = 'completada';
-        msgEl.textContent = '¡Sumaste 50 puntos a tu semana!';
-      } else {
-        msgEl.textContent = 'Guardado — todavía falta que tu compañero/a complete su parte. Los puntos se suman cuando ambos terminan.';
-      }
-    } catch (err) {
-      msgEl.textContent = 'No se pudo guardar tu respuesta (' + escapeHtml(err.message) + ').';
-    }
+    document.getElementById('comunidad-clase-puntos-msg').textContent =
+      'Tu conexión quedó registrada. Volvé al tema y confirmá que tu compañero/a también se conectó: los 50 puntos se suman cuando los dos confirman.';
   } else {
     renderPreguntaClaseComunidad();
   }
 });
 
 comunidadClaseSalir.addEventListener('click', salirDeClaseComunidad);
-comunidadClaseTerminar.addEventListener('click', salirDeClaseComunidad);
+comunidadClaseTerminar.addEventListener('click', () => {
+  salirDeClaseComunidad();
+  recargarDetalleComunidad();
+});
 
 document.getElementById('comunidad-back').addEventListener('click', () => {
   comunidadDetail.hidden = true;
@@ -3574,28 +3612,73 @@ function aplicarFocoComunidad(foco) {
   });
 }
 
-function renderMiSesionComunidad(sesion) {
+function renderMiSesionComunidad(sesion, motivo) {
   const box = document.getElementById('comunidad-mi-sesion');
-  if (!sesion) {
+  const visibles = ['abierta_propia', 'pendiente_horario', 'disponible', 'por_confirmar', 'esperando_companero'];
+  if (!sesion || !visibles.includes(motivo)) {
     box.hidden = true;
     box.innerHTML = '';
     return;
   }
+  const horaLimite = new Date(new Date(sesion.horario).getTime() + 20 * 60 * 1000)
+    .toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false });
+  const meet = sesion.meet_link ? '<br><a href="' + escapeHtml(sesion.meet_link) + '" target="_blank" rel="noopener">Abrir Meet</a>' : '';
+  let html;
+  if (motivo === 'abierta_propia') {
+    html = '<strong>Propusiste este horario:</strong> ' + escapeHtml(formatearHorarioComunidad(sesion.horario)) + '<br>Esperando que otro alumno se sume.' + meet;
+  } else if (motivo === 'pendiente_horario') {
+    html = '<strong>Tu conversación agendada:</strong> ' + escapeHtml(formatearHorarioComunidad(sesion.horario)) + meet +
+      '<br>Cuando empiece, apretá "Comenzar la clase" (podés hacerlo hasta las ' + horaLimite + ').';
+  } else if (motivo === 'disponible') {
+    html = '<strong>Tu conversación está en curso.</strong>' + meet +
+      '<br>Apretá "Comenzar la clase" para marcar que te conectaste. Podés hacerlo hasta las ' + horaLimite + '.';
+  } else if (motivo === 'por_confirmar') {
+    html = '<strong>Tu compañero/a ya marcó que se conectó.</strong><br>Confirmalo más abajo para que se sumen los puntos.' + meet;
+  } else {
+    html = '<strong>Ya marcaste que te conectaste.</strong><br>Falta que tu compañero/a marque que se conectó para que puedas confirmarlo.' + meet;
+  }
+  if (sesion.puede_cancelar) {
+    html += '<br><button type="button" id="comunidad-cancelar-btn" class="clase-salir">Cancelar reunión</button>';
+  }
   box.hidden = false;
-  box.innerHTML = '<strong>Tu conversación agendada:</strong> ' + escapeHtml(formatearHorarioComunidad(sesion.horario)) +
-    (sesion.meet_link ? '<br><a href="' + escapeHtml(sesion.meet_link) + '" target="_blank" rel="noopener">Abrir Meet</a>' : '') +
-    '<br>Cuando estén conectados, apretá "Comenzar la clase" más abajo.';
+  box.innerHTML = html;
+  const cancelar = document.getElementById('comunidad-cancelar-btn');
+  if (cancelar) cancelar.addEventListener('click', cancelarSesionComunidad);
+}
+
+async function cancelarSesionComunidad(e) {
+  if (!confirm('¿Cancelar esta reunión? Se elimina el evento de Calendar y se le avisa a tu compañero/a.')) return;
+  e.currentTarget.disabled = true;
+  e.currentTarget.textContent = 'Cancelando...';
+  try {
+    const { ok, data } = await accionClaseComunidad('cancelar');
+    if (ok) {
+      await recargarDetalleComunidad('Cancelaste la reunión. Podés agendar otro horario cuando quieras.', false);
+    } else {
+      await recargarDetalleComunidad(escapeHtml(data.mensaje || 'No se pudo cancelar.'), true);
+    }
+  } catch (err) {
+    await recargarDetalleComunidad('No se pudo cancelar (' + escapeHtml(err.message) + ').', true);
+  }
 }
 
 function actualizarBotonClaseComunidad() {
   const textos = {
     sin_sesion: 'Agendá una conversación en este tema primero',
+    abierta_propia: 'Esperando que otro alumno se sume',
     pendiente_horario: 'Disponible cuando empiece tu conversación',
-    completada: 'Ya completaste esta clase esta semana',
-    disponible: 'Comenzar la clase'
+    disponible: 'Comenzar la clase',
+    por_confirmar: 'Confirmar que mi compañero/a se conectó',
+    esperando_companero: 'Esperando que tu compañero/a marque que se conectó',
+    confirmada_esperando: 'Confirmaste — falta que tu compañero/a confirme',
+    vencida: 'Ya pasó el tiempo para marcar la conexión',
+    completada: 'Ya completaste esta clase esta semana'
   };
   comunidadClaseBtn.textContent = textos[comunidadMotivoClase] || textos.sin_sesion;
-  comunidadClaseBtn.disabled = comunidadMotivoClase !== 'disponible' || !comunidadPreguntasActivas.length;
+  comunidadClaseBtn.disabled = !(
+    (comunidadMotivoClase === 'disponible' && comunidadPreguntasActivas.length) ||
+    comunidadMotivoClase === 'por_confirmar'
+  );
 }
 
 async function abrirTemaComunidad(temaId, nombre, opciones = {}) {
@@ -3620,19 +3703,19 @@ async function abrirTemaComunidad(temaId, nombre, opciones = {}) {
       body: JSON.stringify({ tema_id: temaId, alumno_id: alumnoId() })
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
-    const data = await res.json();
-
-    const preguntas = (data.tema && data.tema.preguntas) || [];
-    comunidadPreguntasActivas = preguntas;
-    comunidadMotivoClase = data.motivo || 'sin_sesion';
-    comunidadSesionParaClaseId = data.sesion_para_clase_id || null;
-    actualizarBotonClaseComunidad();
-    renderMiSesionComunidad(data.sesion_para_clase);
-
-    renderSesionesAbiertas(data.sesiones_abiertas || []);
+    aplicarDetalleComunidad(await res.json());
   } catch (err) {
     comunidadSesionesList.innerHTML = '<div class="sin-sesiones">No se pudieron cargar los horarios (' + escapeHtml(err.message) + ').</div>';
   }
+}
+
+function aplicarDetalleComunidad(data) {
+  comunidadPreguntasActivas = (data.tema && data.tema.preguntas) || [];
+  comunidadMotivoClase = data.motivo || 'sin_sesion';
+  comunidadSesionParaClaseId = data.sesion_para_clase_id || null;
+  actualizarBotonClaseComunidad();
+  renderMiSesionComunidad(data.sesion_para_clase, comunidadMotivoClase);
+  renderSesionesAbiertas(data.sesiones_abiertas || []);
 }
 
 async function refrescarSesionesComunidad() {
@@ -3641,11 +3724,10 @@ async function refrescarSesionesComunidad() {
     const res = await fetch(COMUNIDAD_BUSCAR_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tema_id: comunidadTemaActivo.id })
+      body: JSON.stringify({ tema_id: comunidadTemaActivo.id, alumno_id: alumnoId() })
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
-    const data = await res.json();
-    renderSesionesAbiertas(data.sesiones_abiertas || []);
+    aplicarDetalleComunidad(await res.json());
   } catch (err) {
     /* si falla el refresco silencioso, se deja la lista como estaba */
   }
