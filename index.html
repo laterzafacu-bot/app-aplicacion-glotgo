@@ -1790,8 +1790,17 @@ async function postConToken(url, payload) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ...payload, access_token: tokenAcceso() })
   });
+  // n8n responde 200 con { ok: false } cuando el token venció, así que también se mira el cuerpo.
+  const noAutorizado = async r => {
+    if (r.status === 401) return true;
+    if (!r.ok) return false;
+    try {
+      const d = await r.clone().json();
+      return d.ok === false && /token/i.test(d.error || '');
+    } catch (e) { return false; }
+  };
   let res = await enviar();
-  if (res.status === 401) {
+  if (await noAutorizado(res)) {
     if (await refrescarSesion()) {
       res = await enviar();
     } else {
