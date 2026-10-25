@@ -1772,7 +1772,7 @@
             <li><strong>Conversaciones en comunidad:</strong> +50 puntos al terminar la clase.</li>
             <li><strong>Feedback:</strong> +25 puntos por contarnos qué mejorarías de la app.</li>
           </ul>
-          <p>Tu meta semanal es de <strong id="ayuda-meta-semanal">–</strong> puntos y la del mes, de <strong id="ayuda-meta-mensual">–</strong>. Los puntos del mes son la suma de todas tus semanas. La carita del Home cambia según cuánto avanzaste.</p>
+          <p>Tu meta semanal es de <strong id="ayuda-meta-semanal">–</strong> puntos y la del mes, de <strong id="ayuda-meta-mensual">–</strong>. Los puntos del mes son la suma de todas tus semanas.</p>
         </div>
 
         <div class="card ayuda-card">
@@ -1796,7 +1796,7 @@
           <p>En Vocabulario, Lectura y Conversaciones en comunidad, cada ejercicio de un tema o categoría puntúa <strong>una sola vez por semana</strong>. Por ejemplo, si sumás puntos con Work and Employment de Vocabulario, ese ejercicio queda bloqueado hasta el lunes siguiente. Si no llegaste a aprobar el quiz, no se bloquea y podés volver a intentarlo.</p>
           <ul>
             <li><strong>Vocabulario:</strong> cuando vuelva a habilitarse la categoría, te tocan otras 10 palabras. Mientras tanto podés repasar las palabras.</li>
-            <li><strong>Lectura:</strong> podés volver a leer la noticia cuando quieras, pero el quiz se habilita de nuevo el lunes.</li>
+            <li><strong>Lectura:</strong> el lunes se habilita una lectura nueva de ese tema.</li>
             <li><strong>Conversaciones en comunidad:</strong> el tema ya completado no vuelve a sumar hasta la semana siguiente.</li>
           </ul>
           <p>Para llegar a tu meta semanal, repartí tus puntos entre distintos temas.</p>
@@ -2735,7 +2735,7 @@ async function revisarQuizVocabulario() {
   vocabQuizRevisado = true;
   limpiarSeleccionQuiz();
   document.getElementById('vocab-quiz-check-btn').disabled = true;
-  document.getElementById('vocab-quiz-reintentar').hidden = false;
+  document.getElementById('vocab-quiz-reintentar').hidden = apruebaVocab;
 }
 
 function initVocabQuizTriggers() {
@@ -3119,11 +3119,7 @@ function setLecturaResultado(html, cls) {
 async function buscarLectura(categoria) {
   setLecturaResultado('<div class="spinner"></div>', 'vacio loading');
   try {
-    const res = await fetch(LECTURA_WEBHOOK_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nivel: LECTURA_NIVEL_FIJO, tema: categoria })
-    });
+    const res = await postConToken(LECTURA_WEBHOOK_URL, { nivel: LECTURA_NIVEL_FIJO, tema: categoria });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
 
@@ -3189,7 +3185,7 @@ function renderLectura(data) {
     <h2 class="lectura-titulo">${escapeHtml(data.titulo || '')}</h2>
     <div class="lectura-texto" lang="en">${textoAParrafosHtml(data.texto)}</div>
     ${yaHecha
-      ? '<div class="lectura-quiz-resumen">Ya hiciste el quiz de esta lectura esta semana. Podés volver a leerla cuando quieras — el quiz vuelve a estar disponible la semana que viene.</div>'
+      ? '<div class="lectura-quiz-resumen">Ya completaste esta lectura esta semana. La semana que viene vas a tener una lectura nueva de este tema.</div>'
       : (preguntas.length ? '<button type="button" class="lectura-comenzar" id="lectura-comenzar">Comenzar quiz</button>' : '')}
     <div class="lectura-quiz" id="lectura-quiz" hidden>
       <div class="preguntas-lectura">${preguntasHtml}</div>
@@ -3253,6 +3249,22 @@ function renderLectura(data) {
         : `¡Bien! ${correctas}/${preguntas.length} correctas — esta categoría ya te sumó puntos esta semana.`);
     } else {
       mostrarResumenConAvatar(resumenEl, 'triste', `${correctas}/${preguntas.length} correctas. Necesitás al menos ${minimoParaPuntos} para sumar los ${PUNTOS_POR_ACTIVIDAD} puntos — probá de nuevo.`);
+      const reintentarBtn = document.createElement('button');
+      reintentarBtn.type = 'button';
+      reintentarBtn.className = 'lectura-comenzar';
+      reintentarBtn.textContent = 'Reintentar';
+      reintentarBtn.addEventListener('click', () => {
+        Object.keys(seleccion).forEach(k => delete seleccion[k]);
+        lecturaResultado.querySelectorAll('.opcion-lectura').forEach(b => {
+          b.disabled = false;
+          b.classList.remove('elegida', 'correcta', 'incorrecta');
+        });
+        resumenEl.innerHTML = '';
+        revisado = false;
+        revisarBtn.disabled = true;
+        revisarBtn.hidden = false;
+      });
+      resumenEl.appendChild(reintentarBtn);
     }
   });
 }
@@ -3714,13 +3726,13 @@ document.getElementById('ayuda-meta-mensual').textContent = PUNTOS_META_MENSUAL;
 
 const TOUR_KEY = 'glotgo-tour-visto';
 const TOUR_PASOS = [
-  { emoji: '👋', titulo: '¡Bienvenido a GlotGo!', texto: 'Acá practicás inglés con actividades cortas y a tu ritmo. Cada actividad que completás te suma puntos.' },
-  { emoji: '⭐', titulo: 'El sistema de puntos', texto: 'La idea es llegar a ' + PUNTOS_META_SEMANAL + ' puntos por semana (la carita del Home va cambiando a medida que avanzás) y a ' + PUNTOS_META_MENSUAL + ' en el mes. Vocabulario y Lectura suman 25 puntos cada una, y las Conversaciones en comunidad suman 50. Los puntos del mes son la suma de todas tus semanas.' },
-  { emoji: '🔤', titulo: 'Vocabulario', texto: 'Elegís una categoría (por ejemplo, Work and Employment) y aprendés 10 palabras nuevas sobre ese tema. Después hacés un quiz corto para afianzar lo que viste. Para sumar los 25 puntos tenés que aprobarlo: al menos el 75% de respuestas correctas. Si no llegás, no suma y podés intentarlo de nuevo.' },
-  { emoji: '📖', titulo: 'Lectura', texto: 'Elegís un tema, leés una noticia real de nivel intermedio y respondés un quiz de comprensión. Para sumar los 25 puntos tenés que acertar al menos el 75% del quiz.' },
-  { emoji: '💬', titulo: 'Conversaciones en comunidad', texto: 'Practicá hablando unos 20 minutos con otro alumno por Meet. Elegís un tema, te sumás a un horario que ya propuso alguien o proponés el tuyo, y la invitación te llega por Calendar. Es la actividad que más puntos da: 50.' },
-  { emoji: '🔒', titulo: 'Importante: ejercicios bloqueados', texto: 'En Vocabulario, Lectura y Conversaciones en comunidad, cada ejercicio de un tema o categoría puntúa una sola vez por semana. Por ejemplo, si sumás puntos con Work and Employment de Vocabulario, ese ejercicio queda bloqueado hasta la semana que viene. Si no aprobaste el quiz, no se bloquea y podés intentarlo de nuevo. Por eso conviene repartir tus puntos entre distintos temas.' },
-  { emoji: '❓', titulo: 'Si te perdés, mirá "Cómo funciona"', texto: 'En el menú vas a encontrar siempre una explicación de cada sección y de cómo se ganan los puntos.' }
+  { emoji: '👋', titulo: '¡Bienvenido a GlotGo!', texto: 'Practicá inglés con actividades cortas. Cada una que completás te suma puntos.' },
+  { emoji: '⭐', titulo: 'Puntos', texto: 'La idea es llegar a ' + PUNTOS_META_SEMANAL + ' puntos por semana. Vocabulario y Lectura suman 25 y las Conversaciones en comunidad, 50.' },
+  { emoji: '🔤', titulo: 'Vocabulario', texto: 'Elegís una categoría, aprendés 10 palabras nuevas y hacés un quiz para afianzarlas. Tenés que aprobarlo (75%) para sumar.' },
+  { emoji: '📖', titulo: 'Lectura', texto: 'Elegís un tema, leés una noticia y respondés un quiz. Tenés que aprobarlo (75%) para sumar.' },
+  { emoji: '💬', titulo: 'Conversaciones en comunidad', texto: 'Practicá hablando unos 20 minutos con otro alumno por Meet. Te sumás a un horario o proponés el tuyo.' },
+  { emoji: '🔒', titulo: 'Importante', texto: 'Cada ejercicio de un tema suma una sola vez por semana. Una vez completado, queda bloqueado hasta la semana que viene.' },
+  { emoji: '❓', titulo: '¿Dudas?', texto: 'En "Cómo funciona", en el menú, tenés todo explicado.' }
 ];
 const tourOverlay = document.getElementById('tour-overlay');
 let tourPaso = 0;
