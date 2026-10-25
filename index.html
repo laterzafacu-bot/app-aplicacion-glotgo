@@ -1720,6 +1720,8 @@
           <button type="button" class="back-link" id="comunidad-back">&larr; Volver a temas</button>
           <h2 class="gramatica-detail-title" id="comunidad-detail-title"></h2>
 
+          <div class="confirmacion-box" id="comunidad-mi-sesion" hidden></div>
+
           <div class="sesiones-section">
             <h3>Horarios propuestos por otros alumnos</h3>
             <div id="comunidad-sesiones-list"></div>
@@ -3539,10 +3541,23 @@ function aplicarFocoComunidad(foco) {
   });
 }
 
+function renderMiSesionComunidad(sesion) {
+  const box = document.getElementById('comunidad-mi-sesion');
+  if (!sesion) {
+    box.hidden = true;
+    box.innerHTML = '';
+    return;
+  }
+  box.hidden = false;
+  box.innerHTML = '<strong>Tu conversación agendada:</strong> ' + escapeHtml(formatearHorarioComunidad(sesion.horario)) +
+    (sesion.meet_link ? '<br><a href="' + escapeHtml(sesion.meet_link) + '" target="_blank" rel="noopener">Abrir Meet</a>' : '') +
+    '<br>Cuando estén conectados, apretá "Comenzar la clase" más abajo.';
+}
+
 function actualizarBotonClaseComunidad() {
   const textos = {
-    sin_sesion: 'Agendá una conversación real primero',
-    pendiente_horario: 'Disponible después de tu conversación',
+    sin_sesion: 'Agendá una conversación en este tema primero',
+    pendiente_horario: 'Disponible cuando empiece tu conversación',
     completada: 'Ya completaste esta clase esta semana',
     disponible: 'Comenzar la clase'
   };
@@ -3560,6 +3575,7 @@ async function abrirTemaComunidad(temaId, nombre, opciones = {}) {
   comunidadPreguntasActivas = [];
   comunidadMotivoClase = 'sin_sesion';
   comunidadSesionParaClaseId = null;
+  renderMiSesionComunidad(null);
   actualizarBotonClaseComunidad();
   salirDeClaseComunidad();
   if (opciones.foco) aplicarFocoComunidad(opciones.foco);
@@ -3578,6 +3594,7 @@ async function abrirTemaComunidad(temaId, nombre, opciones = {}) {
     comunidadMotivoClase = data.motivo || 'sin_sesion';
     comunidadSesionParaClaseId = data.sesion_para_clase_id || null;
     actualizarBotonClaseComunidad();
+    renderMiSesionComunidad(data.sesion_para_clase);
 
     renderSesionesAbiertas(data.sesiones_abiertas || []);
   } catch (err) {
