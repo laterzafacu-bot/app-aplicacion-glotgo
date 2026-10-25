@@ -1767,7 +1767,7 @@
           <h3>⭐ Puntos y metas</h3>
           <p>Cada actividad que completás suma puntos a tu semana:</p>
           <ul>
-            <li><strong>Vocabulario:</strong> +25 puntos al hacer el quiz.</li>
+            <li><strong>Vocabulario:</strong> +25 puntos si acertás al menos el 75% del quiz.</li>
             <li><strong>Lectura:</strong> +25 puntos si acertás al menos el 75% del quiz.</li>
             <li><strong>Conversaciones en comunidad:</strong> +50 puntos al terminar la clase.</li>
             <li><strong>Feedback:</strong> +25 puntos por contarnos qué mejorarías de la app.</li>
@@ -1776,20 +1776,14 @@
         </div>
 
         <div class="card ayuda-card">
-          <h3>🏠 Home</h3>
-          <p>Tu resumen: puntos de la semana, puntos del mes y el calendario con tus clases de los próximos días.</p>
-        </div>
-
-        <div class="card ayuda-card">
           <h3>🔤 Vocabulario</h3>
           <p>Elegís una categoría (por ejemplo, Work and Employment) y aprendés 10 palabras nuevas sobre ese tema. Después hacés un quiz corto para afianzar lo que viste.</p>
-          <p><strong>Importante:</strong> al hacer el quiz de una categoría, esa categoría queda bloqueada hasta la semana que viene (se habilita de nuevo el lunes). Cuando vuelvas, te tocan otras 10 palabras. Mientras tanto podés repasar las palabras, pero no volver a sumar puntos con ese quiz.</p>
+          <p>Para sumar los puntos tenés que aprobar el quiz: al menos el 75% de respuestas correctas. Si no llegás, no suma y podés intentarlo de nuevo.</p>
         </div>
 
         <div class="card ayuda-card">
           <h3>📖 Lectura</h3>
           <p>Elegís un tema, leés una noticia real de nivel intermedio y respondés un quiz de comprensión. Tenés que acertar al menos el 75% para sumar los puntos.</p>
-          <p><strong>Importante:</strong> igual que en Vocabulario, una vez que hacés el quiz de un tema, ese tema queda bloqueado hasta la semana que viene. Podés volver a leer la noticia cuando quieras, pero el quiz se habilita de nuevo el lunes.</p>
         </div>
 
         <div class="card ayuda-card">
@@ -1797,9 +1791,15 @@
           <p>Practicá hablando con otro alumno durante unos 20 minutos. Elegí un tema y sumate a un horario ya propuesto, o proponé el tuyo: la invitación con el link de Meet les llega a los dos por Calendar. Cuando estén conectados, apretá "Comenzó la clase" y van viendo una pregunta a la vez.</p>
         </div>
 
-        <div class="card ayuda-card">
-          <h3>🚧 Gramática</h3>
-          <p>Próximamente: mapas conceptuales por nivel y tema.</p>
+        <div class="card ayuda-card ayuda-destacada">
+          <h3>🔒 Importante: ejercicios bloqueados hasta la semana que viene</h3>
+          <p>En Vocabulario, Lectura y Conversaciones en comunidad, cada ejercicio de un tema o categoría puntúa <strong>una sola vez por semana</strong>. Por ejemplo, si sumás puntos con Work and Employment de Vocabulario, ese ejercicio queda bloqueado hasta el lunes siguiente. Si no llegaste a aprobar el quiz, no se bloquea y podés volver a intentarlo.</p>
+          <ul>
+            <li><strong>Vocabulario:</strong> cuando vuelva a habilitarse la categoría, te tocan otras 10 palabras. Mientras tanto podés repasar las palabras.</li>
+            <li><strong>Lectura:</strong> podés volver a leer la noticia cuando quieras, pero el quiz se habilita de nuevo el lunes.</li>
+            <li><strong>Conversaciones en comunidad:</strong> el tema ya completado no vuelve a sumar hasta la semana siguiente.</li>
+          </ul>
+          <p>Para llegar a tu meta semanal, repartí tus puntos entre distintos temas.</p>
         </div>
       </div>
 
@@ -2710,12 +2710,20 @@ async function revisarQuizVocabulario() {
     }
   });
 
-  const sumo = await otorgarPuntosActividad('vocabulario', vocabCategoriaActiva);
-  const mensajePuntos = sumo
-    ? ` — sumaste ${PUNTOS_POR_ACTIVIDAD} puntos a tu semana.`
-    : ' — esta categoría ya te sumó puntos esta semana.';
+  const totalVocab = correctas + incorrectas;
+  const minimoVocab = Math.ceil(totalVocab * 0.75);
+  const apruebaVocab = correctas >= minimoVocab;
+  let mensajePuntos;
+  if (apruebaVocab) {
+    const sumo = await otorgarPuntosActividad('vocabulario', vocabCategoriaActiva);
+    mensajePuntos = sumo
+      ? ` — sumaste ${PUNTOS_POR_ACTIVIDAD} puntos a tu semana.`
+      : ' — esta categoría ya te sumó puntos esta semana.';
+  } else {
+    mensajePuntos = ` — necesitás al menos ${minimoVocab} correctas para sumar los ${PUNTOS_POR_ACTIVIDAD} puntos. Probá de nuevo.`;
+  }
 
-  const poseVocab = incorrectas === 0 ? 'celebra' : (correctas >= Math.ceil((correctas + incorrectas) * 0.75) ? 'graduado' : 'duda');
+  const poseVocab = incorrectas === 0 ? 'celebra' : (apruebaVocab ? 'graduado' : 'duda');
   const resumenVocabEl = document.getElementById('vocab-quiz-resumen');
   reproducirSonido(poseVocab === 'celebra' || poseVocab === 'graduado' ? 'acierto' : 'error');
   resumenVocabEl.classList.add('con-avatar');
@@ -3708,9 +3716,10 @@ const TOUR_KEY = 'glotgo-tour-visto';
 const TOUR_PASOS = [
   { emoji: '👋', titulo: '¡Bienvenido a GlotGo!', texto: 'Acá practicás inglés con actividades cortas y a tu ritmo. Cada actividad que completás te suma puntos.' },
   { emoji: '⭐', titulo: 'El sistema de puntos', texto: 'La idea es llegar a ' + PUNTOS_META_SEMANAL + ' puntos por semana (la carita del Home va cambiando a medida que avanzás) y a ' + PUNTOS_META_MENSUAL + ' en el mes. Vocabulario y Lectura suman 25 puntos cada una, y las Conversaciones en comunidad suman 50. Los puntos del mes son la suma de todas tus semanas.' },
-  { emoji: '🔤', titulo: 'Vocabulario', texto: 'Elegís una categoría (por ejemplo, Work and Employment) y aprendés 10 palabras nuevas sobre ese tema. Después hacés un quiz corto para afianzar lo que viste. Ojo: una vez que hacés el quiz de una categoría, esa categoría queda bloqueada hasta la semana que viene. Cuando vuelvas, te van a tocar 10 palabras nuevas.' },
-  { emoji: '📖', titulo: 'Lectura', texto: 'Elegís un tema, leés una noticia real de nivel intermedio y respondés un quiz de comprensión. Para sumar los 25 puntos tenés que acertar al menos el 75%. Igual que en Vocabulario, cuando hacés el quiz de un tema, ese tema queda bloqueado hasta la semana que viene.' },
+  { emoji: '🔤', titulo: 'Vocabulario', texto: 'Elegís una categoría (por ejemplo, Work and Employment) y aprendés 10 palabras nuevas sobre ese tema. Después hacés un quiz corto para afianzar lo que viste. Para sumar los 25 puntos tenés que aprobarlo: al menos el 75% de respuestas correctas. Si no llegás, no suma y podés intentarlo de nuevo.' },
+  { emoji: '📖', titulo: 'Lectura', texto: 'Elegís un tema, leés una noticia real de nivel intermedio y respondés un quiz de comprensión. Para sumar los 25 puntos tenés que acertar al menos el 75% del quiz.' },
   { emoji: '💬', titulo: 'Conversaciones en comunidad', texto: 'Practicá hablando unos 20 minutos con otro alumno por Meet. Elegís un tema, te sumás a un horario que ya propuso alguien o proponés el tuyo, y la invitación te llega por Calendar. Es la actividad que más puntos da: 50.' },
+  { emoji: '🔒', titulo: 'Importante: ejercicios bloqueados', texto: 'En Vocabulario, Lectura y Conversaciones en comunidad, cada ejercicio de un tema o categoría puntúa una sola vez por semana. Por ejemplo, si sumás puntos con Work and Employment de Vocabulario, ese ejercicio queda bloqueado hasta la semana que viene. Si no aprobaste el quiz, no se bloquea y podés intentarlo de nuevo. Por eso conviene repartir tus puntos entre distintos temas.' },
   { emoji: '❓', titulo: 'Si te perdés, mirá "Cómo funciona"', texto: 'En el menú vas a encontrar siempre una explicación de cada sección y de cómo se ganan los puntos.' }
 ];
 const tourOverlay = document.getElementById('tour-overlay');
